@@ -1,0 +1,105 @@
+- Tell me about a time you faced a challenging problem and how you solved it?
+- Describe a situation where you had to work as part of a team to achieve a goal?
+- Can you share an example of a time when you had to adapt to a major change at work?
+- Tell me about a time when you took the initiative to improve a process or system?
+- Describe a situation where you had to resolve a conflict with a colleague or client?
+- Give an example of a goal you set and how you achieved it?
+- Tell me about a time you had to handle multiple tasks under a tight deadline?
+- Describe a situation where you had to convince someone to see your point of view?
+- Tell me about a time you failed at something and what you learned from it?
+- Give an example of how you handled constructive criticism?
+- Tell me about a time you had to meet a tight deadline on a critical project?
+- Describe a situation where you had to motivate others to achieve a goal?
+- Can you give an example of a time you improved a team process?
+- Tell me about a time when you disagreed with a manager and how you handled it?
+- Describe a situation where you had to make a difficult decision quickly?
+- Give an example of a time when you went above and beyond your responsibilities?
+- Tell me about a time you handled a stressful situation successfully?
+- Describe a situation where you identified a problem before it became serious?
+- Give an example of how you handled a conflict between team members?
+- Tell me about a time you had to explain a complex concept to someone?
+- Describe a situation where you had to learn a new skill quickly?
+- Give an example of a time when you received critical feedback and acted on it?
+- Tell me about a time when you had to prioritize multiple tasks effectively?
+- Describe a situation where you had to adjust your work style to fit a team?
+- Give an example of a time when you improved efficiency in your team or process?
+- Tell me about a time you demonstrated leadership without being in charge?
+- Describe a situation where you had to solve a problem creatively?
+- Give an example of a time when you had to handle an unhappy customer or client?
+- Tell me about a time you had to collaborate with someone difficult?
+- Describe a situation where you took responsibility for a mistake?
+- Give an example of a time you had to handle a sudden change in project scope?
+- Tell me about a time you received recognition for your work?
+- Describe a situation where you had to make a decision with limited information?
+- Give an example of how you managed a challenging stakeholder or client?
+- Tell me about a time you had to mentor or coach someone?
+- Describe a situation where you had to handle confidential information?
+- Give an example of how you handled a recurring problem in your team?
+- Tell me about a time when you had to adapt to a new technology or tool?
+- Describe a situation where you had to influence someone without authority?
+- Give an example of a time you resolved a conflict within a team project?
+- Tell me about a time you had to manage competing priorities effectively?
+- Describe a situation where you had to make a decision that impacted others?
+- Give an example of a time you solved a problem under tight constraints?
+- Tell me about a time when your communication skills made a difference?
+- Describe a situation where you had to overcome a significant challenge?
+- Give an example of a time you showed initiative in your role?
+- Tell me about a time you successfully managed a project from start to finish?
+- Describe a situation where you had to analyze complex information to make a decision?
+- Give an example of a time when you had to collaborate with a remote team?
+- Tell me about a time you handled multiple stakeholders with conflicting interests?
+- Describe a situation where you had to persuade someone to accept your idea?
+- Give an example of a time you implemented a change that improved performance?
+- Tell me about a time you had to take a risk in a professional setting?
+- Describe a situation where you had to make a tough ethical decision?
+- Give an example of a time you exceeded expectations on a project?
+- Tell me about a time you managed a difficult project successfully?
+- Describe a situation where you had to resolve a misunderstanding at work?
+- Give an example of how you handled a last-minute project change?
+- Tell me about a time you had to deliver difficult news to a colleague or client?
+- Describe a situation where you had to coordinate multiple teams for a project?
+- Give an example of a time you learned from a failure or mistake?
+- Tell me about a time when your problem-solving skills made an impact?
+- Describe a situation where you had to manage conflict without escalating it?
+- Give an example of a time you adapted to a significant change at work?
+- Tell me about a time you had to take ownership of a challenging task?
+- Describe a situation where you had to make a decision that was unpopular?
+- Give an example of a time you successfully delegated tasks to others?
+- Tell me about a time when you had to quickly gain knowledge in a new area?
+- Describe a situation where you helped a team reach a goal under pressure?
+- Give an example of a time you motivated others during a challenging project?
+- Tell me about a time when you had to handle ambiguity effectively?
+- Describe a situation where you contributed to improving team morale?
+- Give an example of a time you handled a critical problem with limited resources?
+- Tell me about a time you identified an opportunity for improvement?
+- Describe a situation where you had to negotiate a successful outcome?
+- Give an example of a time you demonstrated creativity in solving a problem?
+- Tell me about a time you had to manage your time under tight deadlines?
+- Describe a situation where you had to communicate difficult information clearly?
+- Give an example of a time you handled unexpected challenges successfully?
+- Tell me about a time when you had to prioritize conflicting tasks?
+- Describe a situation where you had to manage a project with limited guidance?
+- Give an example of a time you influenced a decision without formal authority?
+- Tell me about a time you worked effectively with a diverse team?
+- Describe a situation where you had to maintain composure under pressure?
+- Give an example of a time you successfully resolved a workplace conflict?
+- Tell me about a time you had to adjust your approach to achieve results?
+- Describe a situation where you provided constructive feedback to a colleague?
+- Give an example of a time you demonstrated persistence in achieving a goal?
+- Tell me about a time you had to troubleshoot a complex problem?
+- Describe a situation where you had to achieve results with limited resources?
+- Give an example of a time you successfully met a challenging deadline?
+- Tell me about a time you had to implement a change in your team?
+- Describe a situation where you had to influence others to achieve a goal?
+- Give an example of a time you overcame resistance to change?
+- Tell me about a time when you successfully managed a difficult client?
+- Describe a situation where you had to take quick action to solve a problem?
+- Give an example of a time you improved a process or system at work?
+- Tell me about a time you had to learn a new tool or technology quickly?
+- Describe a situation where you had to persuade others to adopt your idea?
+- Give an example of a time you effectively handled a high-pressure situation?
+- Tell me about a time you collaborated with someone outside your team?
+- Describe a situation where you had to handle an urgent problem efficiently?
+- Give an example of a time you turned a failure into a learning opportunity?
+- Tell me about a time you had to handle competing priorities successfully?
+
