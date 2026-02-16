@@ -1,4 +1,7 @@
 // src/components/Contact.jsx
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 export default function Contact() {
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -8,7 +11,7 @@ export default function Contact() {
     const message = form[2].value;
 
     try {
-      const res = await fetch("http://localhost:5000/api/contact", {
+      const res = await fetch(`${API_BASE_URL}/api/contact`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, message }),

@@ -10,7 +10,7 @@ export default function Notification({ message, duration = 3000 }) {
       const timer = setTimeout(() => setVisible(false), duration);
       return () => clearTimeout(timer);
     }
-  }, [message]);
+  }, [message, duration]);
 
   return (
     <div
@@ -22,4 +22,3 @@ export default function Notification({ message, duration = 3000 }) {
     </div>
   );
 }
-<Notification message={toastMessage} />

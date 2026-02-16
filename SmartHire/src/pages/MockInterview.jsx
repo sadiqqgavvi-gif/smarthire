@@ -15,7 +15,7 @@ export default function MockInterview() {
   const [loading, setLoading] = useState(true);
   const [evaluating, setEvaluating] = useState(false);
 
-  const API = import.meta.env.VITE_API_URL;
+  const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
   console.log("API URL:", API);
 
@@ -37,7 +37,7 @@ export default function MockInterview() {
       }
     }
     loadQuestions();
-  }, [type, count, difficulty]);
+  }, [type, count, difficulty, API]);
 
   /* =========================
      EVALUATE ANSWER

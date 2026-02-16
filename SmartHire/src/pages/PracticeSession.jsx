@@ -64,11 +64,11 @@ export default function PracticeSession() {
           throw new Error(data.message || "Failed to fetch questions");
         }
 
-        if (!Array.isArray(data)) {
+        if (!Array.isArray(data.questions)) {
           throw new Error("Invalid response format");
         }
 
-        setQuestions(data);
+        setQuestions(data.questions);
       } catch (err) {
         console.error("❌ Fetch questions error:", err);
         setError(err.message || "Failed to fetch questions");

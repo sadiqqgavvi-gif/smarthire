@@ -108,7 +108,7 @@ async function buildDataset() {
       question: q,
       category,
       difficulty: assignDifficulty(q), // ⭐ FIXED
-      role: "General",
+      role: "general",
       language: "en"
     }));
 

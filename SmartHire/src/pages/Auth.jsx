@@ -2,6 +2,9 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate, useLocation } from "react-router-dom";
 
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 export default function Auth({ type }) {
   const [form, setForm] = useState({ email: "", password: "" });
   const [message, setMessage] = useState("");
@@ -22,8 +25,8 @@ export default function Auth({ type }) {
     try {
       const url =
         type === "login"
-          ? "http://localhost:5000/api/auth/login"
-          : "http://localhost:5000/api/auth/register";
+          ? `${API_BASE_URL}/api/auth/login`
+          : `${API_BASE_URL}/api/auth/register`;
 
       const res = await axios.post(url, form);
 

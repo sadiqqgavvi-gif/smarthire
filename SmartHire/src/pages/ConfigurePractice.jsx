@@ -14,7 +14,7 @@ export default function ConfigurePractice() {
   const [difficulty, setDifficulty] = useState("Medium");
   const [count, setCount] = useState(3);
   const [mode, setMode] = useState("practice"); // NEW
-  const [role, setRole] = useState("");
+  const [role] = useState("");
 
   const startPractice = () => {
     const params = new URLSearchParams({

@@ -46,7 +46,7 @@ app.use("/api/questions", questionRoutes); // ✅ Mount questionRoutes here
 
 // --- MongoDB connection ---
 mongoose
-  .connect("mongodb://localhost:27017/smarthire")
+  .connect(process.env.MONGO_URI || "mongodb://localhost:27017/smarthire")
   .then(() => console.log("✅ MongoDB connected"))
   .catch((err) => console.error("❌ MongoDB connection error:", err));
 
