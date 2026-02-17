@@ -14,6 +14,8 @@ export default function MockInterview() {
   const [feedback, setFeedback] = useState(null);
   const [loading, setLoading] = useState(true);
   const [evaluating, setEvaluating] = useState(false);
+  const [scores, setScores] = useState([]);
+  const [sessionSaved, setSessionSaved] = useState(false);
 
   const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
@@ -63,6 +65,10 @@ export default function MockInterview() {
 
       if (data.success && data.evaluation) {
         setFeedback(data.evaluation);
+        const score = Number(data.evaluation?.score);
+        if (Number.isFinite(score)) {
+          setScores((prev) => [...prev, score]);
+        }
       } else {
         setFeedback({
           score: "N/A",
@@ -85,6 +91,45 @@ export default function MockInterview() {
       setEvaluating(false);
     }
   };
+
+  useEffect(() => {
+    const saveSession = async () => {
+      if (sessionSaved || current < questions.length) return;
+
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      const averageScore = scores.length
+        ? Number((scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(2))
+        : 0;
+
+      try {
+        const res = await fetch(`${API}/api/practice/sessions`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            mode: "mock",
+            category: String(type).toLowerCase(),
+            difficulty: difficulty || "mixed",
+            questionCount: Number(count) || questions.length,
+            attemptedCount: scores.length,
+            averageScore,
+          }),
+        });
+
+        if (res.ok) {
+          setSessionSaved(true);
+        }
+      } catch (err) {
+        console.error("Failed to save mock session", err);
+      }
+    };
+
+    saveSession();
+  }, [API, count, current, difficulty, questions.length, scores, sessionSaved, type]);
 
   const nextQuestion = () => {
     setAnswer("");

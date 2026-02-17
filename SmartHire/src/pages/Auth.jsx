@@ -13,7 +13,9 @@ export default function Auth({ type }) {
    const location = useLocation();
 
     // Where to go AFTER login
-  const from = location.state?.from?.pathname || "/dashboard";
+  const fromPath = location.state?.from?.pathname || "/dashboard";
+  const fromSearch = location.state?.from?.search || "";
+  const from = `${fromPath}${fromSearch}`;
 
   useEffect(() => {
     // Clear fields when page loads
@@ -32,6 +34,17 @@ export default function Auth({ type }) {
 
       setMessage(res.data.message);
       localStorage.setItem("token", res.data.token);
+
+      const verifyRes = await fetch(`${API_BASE_URL}/api/auth/me`, {
+        headers: {
+          Authorization: `Bearer ${res.data.token}`,
+        },
+      });
+
+      if (!verifyRes.ok) {
+        localStorage.removeItem("token");
+        throw new Error("Session validation failed. Please try again.");
+      }
 
     if (type === "login") {
       navigate(from, { replace: true });

@@ -22,6 +22,8 @@ export default function PracticeSession() {
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
   const [error, setError] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState("");
 
   /* 🔐 AUTH CHECK */
   useEffect(() => {
@@ -106,6 +108,55 @@ export default function PracticeSession() {
     }
   };
 
+  const saveSession = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      navigate("/login", { replace: true });
+      return;
+    }
+
+    const scores = Object.values(evaluations)
+      .map((ev) => Number(ev?.score))
+      .filter((n) => Number.isFinite(n));
+
+    const averageScore = scores.length
+      ? Number((scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(2))
+      : 0;
+
+    setSaving(true);
+    setSaveMessage("");
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/practice/sessions`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          mode: "practice",
+          category: category.toLowerCase(),
+          difficulty: isBehavioral
+            ? ""
+            : (difficulty || "mixed").toLowerCase(),
+          questionCount: Number(count) || questions.length,
+          attemptedCount: Object.keys(evaluations).length,
+          averageScore,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to save session");
+      }
+
+      setSaveMessage("Session saved to dashboard.");
+    } catch (err) {
+      setSaveMessage(err.message || "Unable to save session.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <section className="py-16 px-4 bg-gray-50 min-h-screen relative">
       <div className="max-w-4xl mx-auto space-y-6">
@@ -179,6 +230,21 @@ export default function PracticeSession() {
             )}
           </div>
         ))}
+
+        {!fetching && questions.length > 0 && (
+          <div className="pt-2">
+            <button
+              onClick={saveSession}
+              disabled={saving || Object.keys(evaluations).length === 0}
+              className="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 disabled:opacity-50"
+            >
+              {saving ? "Saving..." : "Finish & Save Session"}
+            </button>
+            {saveMessage && (
+              <p className="mt-2 text-sm text-gray-600">{saveMessage}</p>
+            )}
+          </div>
+        )}
       </div>
 
       <button
