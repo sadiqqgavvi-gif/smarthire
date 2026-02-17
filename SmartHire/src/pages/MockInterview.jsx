@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, useParams } from "react-router-dom";
+import { authFetch } from "../utils/authFetch";
 
 export default function MockInterview() {
   const { type } = useParams();
@@ -96,19 +97,15 @@ export default function MockInterview() {
     const saveSession = async () => {
       if (sessionSaved || current < questions.length) return;
 
-      const token = localStorage.getItem("token");
-      if (!token) return;
-
       const averageScore = scores.length
         ? Number((scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(2))
         : 0;
 
       try {
-        const res = await fetch(`${API}/api/practice/sessions`, {
+        const res = await authFetch(`${API}/api/practice/sessions`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
             mode: "mock",

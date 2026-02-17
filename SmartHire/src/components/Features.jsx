@@ -7,19 +7,19 @@ export default function Features() {
       icon: <Mic className="text-blue-600 w-6 h-6" />,
       title: "Mock Interviews",
       text: "Practice with AI that asks real interview questions and evaluates your responses in real-time.",
-      button: { label: "Try now →", color: "text-blue-600" },
+      // button: { label: "Try now →", color: "text-blue-600" },
     },
     {
       icon: <BarChart2 className="text-purple-600 w-6 h-6" />,
       title: "Performance Analysis",
       text: "Get detailed feedback on your speaking pace, word choice, confidence level, and more.",
-      button: { label: "Learn more →", color: "text-purple-600" },
+      // button: { label: "Learn more →", color: "text-purple-600" },
     },
     {
       icon: <Book className="text-blue-600 w-6 h-6" />,
       title: "Company-Specific Prep",
       text: "Access tailored questions and insights for over 5,000 companies worldwide.",
-      button: { label: "Explore →", color: "text-blue-600" },
+      // button: { label: "Explore →", color: "text-blue-600" },
     },
   ];
 
@@ -46,11 +46,13 @@ export default function Features() {
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-3">{f.title}</h3>
               <p className="text-gray-600 mb-4">{f.text}</p>
-              <button
-                className={`${f.button.color} font-medium hover:underline`}
-              >
-                {f.button.label}
-              </button>
+              {f.button ? (
+                <button
+                  className={`${f.button.color} font-medium hover:underline`}
+                >
+                  {f.button.label}
+                </button>
+              ) : null}
             </div>
           ))}
         </div>

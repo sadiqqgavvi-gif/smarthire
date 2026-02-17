@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate, useLocation } from "react-router-dom";
+import { authFetch } from "../utils/authFetch";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL || "http://localhost:5000";
@@ -30,19 +31,12 @@ export default function Auth({ type }) {
           ? `${API_BASE_URL}/api/auth/login`
           : `${API_BASE_URL}/api/auth/register`;
 
-      const res = await axios.post(url, form);
+      const res = await axios.post(url, form, { withCredentials: true });
 
       setMessage(res.data.message);
-      localStorage.setItem("token", res.data.token);
-
-      const verifyRes = await fetch(`${API_BASE_URL}/api/auth/me`, {
-        headers: {
-          Authorization: `Bearer ${res.data.token}`,
-        },
-      });
+      const verifyRes = await authFetch(`${API_BASE_URL}/api/auth/me`);
 
       if (!verifyRes.ok) {
-        localStorage.removeItem("token");
         throw new Error("Session validation failed. Please try again.");
       }
 
@@ -53,7 +47,10 @@ export default function Auth({ type }) {
     }
 
     } catch (err) {
-      setMessage(err.response?.data?.message || "Something went wrong");
+      const apiMessage =
+        err.response?.data?.error?.message ||
+        err.response?.data?.message;
+      setMessage(apiMessage || err.message || "Something went wrong");
     }
   };
 

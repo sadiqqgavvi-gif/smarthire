@@ -2,10 +2,11 @@ import express from "express";
 import Question from "../models/questionModel.js";
 import protect from "../middleware/authMiddleware.js";
 import PracticeSession from "../models/PracticeSession.js";
+import { validatePracticeSessionPayload } from "../middleware/validationMiddleware.js";
 
 const router = express.Router();
 
-router.post("/sessions", protect, async (req, res) => {
+router.post("/sessions", protect, validatePracticeSessionPayload, async (req, res) => {
   try {
     const {
       mode = "practice",

@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
+import { authFetch } from "../utils/authFetch";
 
 export default function ProtectedRoute({ children }) {
   const API_BASE_URL =
     import.meta.env.VITE_API_URL || "http://localhost:5000";
 
-  const token = localStorage.getItem("token");
   const location = useLocation();
   const [isChecking, setIsChecking] = useState(true);
   const [isAuthorized, setIsAuthorized] = useState(false);
@@ -14,27 +14,14 @@ export default function ProtectedRoute({ children }) {
     let isMounted = true;
 
     const validateToken = async () => {
-      if (!token) {
-        if (isMounted) {
-          setIsAuthorized(false);
-          setIsChecking(false);
-        }
-        return;
-      }
-
       try {
-        const res = await fetch(`${API_BASE_URL}/api/auth/me`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const res = await authFetch(`${API_BASE_URL}/api/auth/me`);
 
         if (!isMounted) return;
 
         if (res.ok) {
           setIsAuthorized(true);
         } else {
-          localStorage.removeItem("token");
           setIsAuthorized(false);
         }
       } catch {
@@ -52,7 +39,7 @@ export default function ProtectedRoute({ children }) {
     return () => {
       isMounted = false;
     };
-  }, [token, API_BASE_URL]);
+  }, [API_BASE_URL]);
 
   if (isChecking) {
     return <div className="p-6 text-gray-500">Checking authentication...</div>;

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { useParams, useSearchParams, useNavigate } from "react-router-dom";
+import { useParams, useSearchParams, useNavigate, useLocation } from "react-router-dom";
+import { authFetch } from "../utils/authFetch";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL || "http://localhost:5000";
@@ -8,6 +9,7 @@ export default function PracticeSession() {
   const { type } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const category = decodeURIComponent(type);
   const isBehavioral = category.toLowerCase() === "behavioral";
@@ -25,12 +27,6 @@ export default function PracticeSession() {
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState("");
 
-  /* 🔐 AUTH CHECK */
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) navigate("/login", { replace: true });
-  }, [navigate]);
-
   /* 📥 FETCH QUESTIONS */
   useEffect(() => {
     const fetchQuestions = async () => {
@@ -38,8 +34,6 @@ export default function PracticeSession() {
       setError(null);
 
       try {
-        const token = localStorage.getItem("token");
-
         const params = new URLSearchParams({
           category,
           count,
@@ -51,14 +45,7 @@ export default function PracticeSession() {
           params.append("difficulty", difficulty);
         }
 
-        const res = await fetch(
-          `${API_BASE_URL}/api/questions?${params.toString()}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+        const res = await fetch(`${API_BASE_URL}/api/questions?${params.toString()}`);
 
         const data = await res.json();
 
@@ -109,12 +96,6 @@ export default function PracticeSession() {
   };
 
   const saveSession = async () => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      navigate("/login", { replace: true });
-      return;
-    }
-
     const scores = Object.values(evaluations)
       .map((ev) => Number(ev?.score))
       .filter((n) => Number.isFinite(n));
@@ -127,11 +108,10 @@ export default function PracticeSession() {
     setSaveMessage("");
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/practice/sessions`, {
+      const res = await authFetch(`${API_BASE_URL}/api/practice/sessions`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           mode: "practice",
@@ -146,6 +126,10 @@ export default function PracticeSession() {
       });
 
       if (!res.ok) {
+        if (res.status === 401) {
+          navigate("/login", { state: { from: location }, replace: true });
+          return;
+        }
         throw new Error("Failed to save session");
       }
 

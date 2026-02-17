@@ -8,6 +8,7 @@ import contactRoutes from "./routes/contactRoutes.js";
 import aiRoutes from "./routes/aiRoutes.js";
 import practiceRoutes from "./routes/practiceRoutes.js";
 import mockRoutes from "./routes/mockRoutes.js";
+import { notFound, errorHandler } from "./utils/errorHandler.js";
 
 dotenv.config();
 const app = express();
@@ -25,7 +26,8 @@ app.use(
       if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
       return callback(new Error(`Blocked by CORS: ${origin}`));
     },
-    methods: ["GET", "POST"],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
   })
 );
@@ -52,6 +54,9 @@ mongoose
 
 // --- Root route ---
 app.get("/", (req, res) => res.send("SmartHire Backend Running ✅"));
+
+app.use(notFound);
+app.use(errorHandler);
 
 // --- Start server ---
 const PORT = process.env.PORT || 5000;
