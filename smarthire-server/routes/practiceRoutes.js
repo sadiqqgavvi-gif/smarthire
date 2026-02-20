@@ -6,6 +6,41 @@ import { validatePracticeSessionPayload } from "../middleware/validationMiddlewa
 
 const router = express.Router();
 
+const buildUniqueQuestionPipeline = (filter, size, excludedQuestions = []) => {
+  const pipeline = [
+    { $match: filter },
+    {
+      $addFields: {
+        __normalizedQuestion: {
+          $toLower: { $trim: { input: "$question" } },
+        },
+      },
+    },
+  ];
+
+  if (excludedQuestions.length) {
+    pipeline.push({
+      $match: {
+        __normalizedQuestion: { $nin: excludedQuestions },
+      },
+    });
+  }
+
+  pipeline.push(
+    {
+      $group: {
+        _id: "$__normalizedQuestion",
+        doc: { $first: "$$ROOT" },
+      },
+    },
+    { $replaceRoot: { newRoot: "$doc" } },
+    { $project: { __normalizedQuestion: 0 } },
+    { $sample: { size } }
+  );
+
+  return pipeline;
+};
+
 router.post("/sessions", protect, validatePracticeSessionPayload, async (req, res) => {
   try {
     const {
@@ -80,20 +115,31 @@ router.get("/sessions/me", protect, async (req, res) => {
 router.get("/:type", async (req, res) => {
   try {
     const { type } = req.params;
-    const { count = 3, difficulty } = req.query;
+    const { difficulty } = req.query;
+    const parsedCount = Number.parseInt(req.query.count, 10);
+    const count = Number.isFinite(parsedCount) && parsedCount > 0 ? parsedCount : 3;
+    const normalizedType = type.toLowerCase();
 
-    const filter = {
-      category: type.toLowerCase(),
+    const baseFilter = {
+      category: normalizedType,
     };
 
-    if (difficulty && type !== "behavioral") {
+    const filter = { ...baseFilter };
+
+    if (difficulty && normalizedType !== "behavioral") {
       filter.difficulty = difficulty.toLowerCase();
     }
 
-    const questions = await Question.aggregate([
-      { $match: filter },
-      { $sample: { size: Number(count) } }
-    ]);
+    let questions = await Question.aggregate(buildUniqueQuestionPipeline(filter, count));
+
+    if (questions.length < count && filter.difficulty) {
+      const remaining = count - questions.length;
+      const seen = questions.map((q) => q.question.trim().toLowerCase());
+      const extraQuestions = await Question.aggregate(
+        buildUniqueQuestionPipeline(baseFilter, remaining, seen)
+      );
+      questions = [...questions, ...extraQuestions];
+    }
 
     res.json({ questions });
   } catch (err) {
