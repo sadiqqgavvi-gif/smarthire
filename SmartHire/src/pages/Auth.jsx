@@ -1,27 +1,60 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { useNavigate, useLocation } from "react-router-dom";
-import { authFetch } from "../utils/authFetch";
-
-const API_BASE_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:5000";
+import { useNavigate } from "react-router-dom";
+import { authFetch, logoutUser } from "../utils/authFetch";
+import { API_BASE_URL } from "../utils/apiBaseUrl";
 
 export default function Auth({ type }) {
   const [form, setForm] = useState({ email: "", password: "" });
   const [message, setMessage] = useState("");
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-   const navigate = useNavigate();
-   const location = useLocation();
-
-    // Where to go AFTER login
-  const fromPath = location.state?.from?.pathname || "/dashboard";
-  const fromSearch = location.state?.from?.search || "";
-  const from = `${fromPath}${fromSearch}`;
+  const navigate = useNavigate();
 
   useEffect(() => {
+    let isMounted = true;
+
     // Clear fields when page loads
     setForm({ email: "", password: "" });
+
+    const checkAuth = async () => {
+      try {
+        const res = await authFetch(`${API_BASE_URL}/api/auth/me`);
+        if (!isMounted) return;
+        setIsAuthenticated(res.ok);
+      } catch {
+        if (!isMounted) return;
+        setIsAuthenticated(false);
+      }
+    };
+
+    checkAuth();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
+
+  const handleLogout = async () => {
+    try {
+      await logoutUser();
+      setMessage("Logged out successfully");
+    } catch {
+      setMessage("Logout failed");
+    } finally {
+      setIsAuthenticated(false);
+      setForm({ email: "", password: "" });
+      navigate("/", { replace: true });
+    }
+  };
+
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      navigate(-1);
+      return;
+    }
+    navigate("/", { replace: true });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -41,9 +74,9 @@ export default function Auth({ type }) {
       }
 
     if (type === "login") {
-      navigate(from, { replace: true });
+      navigate("/", { replace: true });
     } else {
-      navigate("/dashboard");
+      navigate("/login", { replace: true });
     }
 
     } catch (err) {
@@ -61,12 +94,19 @@ export default function Auth({ type }) {
       
       {/* Back Button */}
       <button
-        onClick={() => window.history.back()}
+        onClick={handleBack}
         className="absolute top-6 left-6 px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg transition"
       >
-        ← Back
+        {"<- Back"}
       </button>
-
+      {isAuthenticated && (
+        <button
+          onClick={handleLogout}
+          className="absolute top-6 right-6 px-4 py-2 bg-red-600 text-white hover:bg-red-700 rounded-lg transition"
+        >
+          Logout
+        </button>
+      )}
       <div className="bg-white shadow-md p-8 rounded-2xl w-96">
         <h1 className="text-2xl font-bold mb-4 text-center">
           {type === "login" ? "Login to SmartHire" : "Create Your SmartHire Account"}
@@ -104,3 +144,4 @@ export default function Auth({ type }) {
     </div>
   );
 }
+

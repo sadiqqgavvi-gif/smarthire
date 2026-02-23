@@ -1,10 +1,45 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Menu, X } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { authFetch, logoutUser } from "../utils/authFetch";
+import { API_BASE_URL } from "../utils/apiBaseUrl";
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const navigate = useNavigate();
   const toggleMenu = () => setMenuOpen(!menuOpen);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const checkAuth = async () => {
+      try {
+        const res = await authFetch(`${API_BASE_URL}/api/auth/me`);
+        if (!isMounted) return;
+        setIsAuthenticated(res.ok);
+      } catch {
+        if (!isMounted) return;
+        setIsAuthenticated(false);
+      }
+    };
+
+    checkAuth();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [API_BASE_URL]);
+
+  const handleLogout = async () => {
+    try {
+      await logoutUser();
+    } finally {
+      setIsAuthenticated(false);
+      setMenuOpen(false);
+      navigate("/", { replace: true });
+    }
+  };
 
   return (
     <nav className="bg-white/80 backdrop-blur-md shadow-sm fixed w-full z-50">
@@ -37,20 +72,38 @@ export default function Navbar() {
 
           {/* Desktop Buttons */}
           <div className="hidden md:flex items-center space-x-3">
-            <Link
-              to="/login"
-              className="px-4 py-2 text-gray-700 rounded-md hover:bg-gray-100 "
-            >
-              Login
-            </Link>
-
-
-            <Link
-              to="/signup"
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-            >
-              Register Here
-            </Link>
+            {isAuthenticated ? (
+              <>
+                <Link
+                  to="/dashboard"
+                  className="px-4 py-2 text-gray-700 rounded-md hover:bg-gray-100"
+                >
+                  Dashboard
+                </Link>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  to="/login"
+                  className="px-4 py-2 text-gray-700 rounded-md hover:bg-gray-100 "
+                >
+                  Login
+                </Link>
+                <Link
+                  to="/signup"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                >
+                  Register Here
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -100,31 +153,41 @@ export default function Navbar() {
             </a>
 
             {/* Mobile Login/Register */}
-            <Link
-              to="/login"
-              className="text-gray-700 px-3 py-2 rounded-md hover:bg-gray-100"
-              onClick={() => setMenuOpen(false)}
-            >
-              Login
-            </Link>
-
-            <Link
-              to="/signup"
-              className="bg-blue-600 text-white px-3 py-2 rounded-md hover:bg-blue-700"
-              onClick={() => setMenuOpen(false)}
-            >
-              Get Started
-            </Link>
-
-             <Link
-              to="/signup"
-              className="bg-blue-600 text-white px-3 py-2 rounded-md hover:bg-blue-700"
-              onClick={() => setMenuOpen(false)}
-            >
-              Search
-            </Link>
-
-            
+            {isAuthenticated ? (
+              <>
+                <Link
+                  to="/dashboard"
+                  className="text-gray-700 px-3 py-2 rounded-md hover:bg-gray-100"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  Dashboard
+                </Link>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="bg-red-600 text-white px-3 py-2 rounded-md hover:bg-red-700 text-left"
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  to="/login"
+                  className="text-gray-700 px-3 py-2 rounded-md hover:bg-gray-100"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  Login
+                </Link>
+                <Link
+                  to="/signup"
+                  className="bg-blue-600 text-white px-3 py-2 rounded-md hover:bg-blue-700"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  Get Started
+                </Link>
+              </>
+            )}
 
           </div>
         </div>

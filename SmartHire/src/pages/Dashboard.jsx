@@ -11,11 +11,9 @@ import {
 import { TrendingUp, CheckCircle, Clock } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { authFetch, logoutUser } from "../utils/authFetch";
+import { API_BASE_URL } from "../utils/apiBaseUrl";
 
 export default function Dashboard() {
-  const API_BASE_URL =
-    import.meta.env.VITE_API_URL || "http://localhost:5000";
-
   const [stats, setStats] = useState({
     overallScore: 0,
     totalSessions: 0,
@@ -58,7 +56,7 @@ export default function Dashboard() {
 
   const handleLogout = async () => {
     await logoutUser();
-    navigate("/login", { replace: true });
+    navigate("/", { replace: true });
   };
 
   return (

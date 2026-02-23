@@ -55,7 +55,11 @@ export const validateContactPayload = (req, res, next) => {
 };
 
 export const validateAiEvaluationPayload = (req, res, next) => {
-  const { answer } = req.body || {};
+  const { question, answer } = req.body || {};
+
+  if (!question || typeof question !== "string" || !question.trim()) {
+    return sendValidationError(res, "Question is required", "question");
+  }
 
   if (!answer || typeof answer !== "string" || !answer.trim()) {
     return sendValidationError(res, "Answer is required", "answer");

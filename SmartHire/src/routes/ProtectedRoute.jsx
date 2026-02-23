@@ -1,11 +1,9 @@
 import { useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { authFetch } from "../utils/authFetch";
+import { API_BASE_URL } from "../utils/apiBaseUrl";
 
 export default function ProtectedRoute({ children }) {
-  const API_BASE_URL =
-    import.meta.env.VITE_API_URL || "http://localhost:5000";
-
   const location = useLocation();
   const [isChecking, setIsChecking] = useState(true);
   const [isAuthorized, setIsAuthorized] = useState(false);

@@ -1,9 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useSearchParams, useNavigate, useLocation } from "react-router-dom";
 import { authFetch } from "../utils/authFetch";
-
-const API_BASE_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:5000";
+import { API_BASE_URL } from "../utils/apiBaseUrl";
 
 export default function PracticeSession() {
   const { type } = useParams();
@@ -83,13 +81,30 @@ export default function PracticeSession() {
         body: JSON.stringify({
           question: questionText,
           answer: answers[questionId],
+          category: category.toLowerCase(),
         }),
       });
 
       const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data?.message || "Evaluation failed");
+      }
+
       setEvaluations((prev) => ({ ...prev, [questionId]: data }));
     } catch (err) {
       console.error("❌ Evaluation failed:", err);
+      setEvaluations((prev) => ({
+        ...prev,
+        [questionId]: {
+          success: false,
+          score: 0,
+          strengths: "",
+          weaknesses: "Evaluation unavailable right now.",
+          improvement: "Try again in a moment.",
+          overall_feedback: "Could not evaluate this answer.",
+          feedback: "Could not evaluate this answer.",
+        },
+      }));
     } finally {
       setLoading(false);
     }
@@ -203,12 +218,20 @@ export default function PracticeSession() {
                   {evaluations[q._id].score}/10
                 </p>
                 <p className="mt-1">
-                  <strong>Feedback:</strong>{" "}
-                  {evaluations[q._id].feedback}
+                  <strong>Strengths:</strong>{" "}
+                  {evaluations[q._id].strengths || "N/A"}
+                </p>
+                <p className="mt-1">
+                  <strong>Weaknesses:</strong>{" "}
+                  {evaluations[q._id].weaknesses || "N/A"}
                 </p>
                 <p className="mt-1">
                   <strong>Improvement:</strong>{" "}
                   {evaluations[q._id].improvement}
+                </p>
+                <p className="mt-1">
+                  <strong>Overall Feedback:</strong>{" "}
+                  {evaluations[q._id].overall_feedback || evaluations[q._id].feedback}
                 </p>
               </div>
             )}

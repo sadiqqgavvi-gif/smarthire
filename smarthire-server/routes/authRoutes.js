@@ -65,6 +65,43 @@ const clearAuthCookies = (res) => {
   res.clearCookie(REFRESH_COOKIE_NAME, refreshCookieOptions);
 };
 
+const resolveLogoutUserId = async (req) => {
+  const cookies = parseCookies(req.headers.cookie || "");
+  const accessToken = cookies[ACCESS_COOKIE_NAME];
+  const refreshToken = cookies[REFRESH_COOKIE_NAME];
+
+  if (accessToken) {
+    try {
+      const decoded = jwt.verify(
+        accessToken,
+        process.env.ACCESS_TOKEN_SECRET || process.env.JWT_SECRET
+      );
+      if (decoded?.id) return decoded.id;
+    } catch {
+      // Fall through to refresh token check.
+    }
+  }
+
+  if (!refreshToken) return null;
+
+  try {
+    const decoded = jwt.verify(
+      refreshToken,
+      process.env.REFRESH_TOKEN_SECRET || process.env.JWT_SECRET
+    );
+
+    if (decoded?.type !== "refresh" || !decoded?.id) return null;
+
+    const user = await User.findById(decoded.id).select("_id refreshTokenHash");
+    if (!user?.refreshTokenHash) return null;
+
+    if (hashToken(refreshToken) !== user.refreshTokenHash) return null;
+    return user._id;
+  } catch {
+    return null;
+  }
+};
+
 // Register User
 router.post("/register", validateAuthPayload, async (req, res) => {
   try {
@@ -216,21 +253,10 @@ router.post("/refresh", async (req, res) => {
 
 router.post("/logout", async (req, res) => {
   try {
-    const cookies = parseCookies(req.headers.cookie || "");
-    const refreshToken = cookies[REFRESH_COOKIE_NAME];
+    const userId = await resolveLogoutUserId(req);
 
-    if (refreshToken) {
-      try {
-        const decoded = jwt.verify(
-          refreshToken,
-          process.env.REFRESH_TOKEN_SECRET || process.env.JWT_SECRET
-        );
-        if (decoded?.id) {
-          await User.findByIdAndUpdate(decoded.id, { refreshTokenHash: null });
-        }
-      } catch {
-        // Even with invalid refresh token, still clear cookies for client.
-      }
+    if (userId) {
+      await User.findByIdAndUpdate(userId, { refreshTokenHash: null });
     }
 
     clearAuthCookies(res);

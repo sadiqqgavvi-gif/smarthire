@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, useParams } from "react-router-dom";
 import { authFetch } from "../utils/authFetch";
+import { API_BASE_URL } from "../utils/apiBaseUrl";
 
 export default function MockInterview() {
   const { type } = useParams();
@@ -18,10 +19,6 @@ export default function MockInterview() {
   const [scores, setScores] = useState([]);
   const [sessionSaved, setSessionSaved] = useState(false);
 
-  const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
-
-  console.log("API URL:", API);
-
   /* =========================
      FETCH QUESTIONS FROM API
   ========================= */
@@ -29,7 +26,7 @@ export default function MockInterview() {
     async function loadQuestions() {
       try {
         const res = await fetch(
-          `${API}/api/practice/${type}?count=${count}&difficulty=${difficulty}`
+          `${API_BASE_URL}/api/practice/${type}?count=${count}&difficulty=${difficulty}`
         );
         const data = await res.json();
         setQuestions(data.questions || []);
@@ -40,7 +37,7 @@ export default function MockInterview() {
       }
     }
     loadQuestions();
-  }, [type, count, difficulty, API]);
+  }, [type, count, difficulty]);
 
   /* =========================
      EVALUATE ANSWER
@@ -52,7 +49,7 @@ export default function MockInterview() {
     setFeedback(null);
 
     try {
-      const res = await fetch(`${API}/api/mock/evaluate`, {
+      const res = await fetch(`${API_BASE_URL}/api/mock/evaluate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -102,7 +99,7 @@ export default function MockInterview() {
         : 0;
 
       try {
-        const res = await authFetch(`${API}/api/practice/sessions`, {
+        const res = await authFetch(`${API_BASE_URL}/api/practice/sessions`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -126,7 +123,7 @@ export default function MockInterview() {
     };
 
     saveSession();
-  }, [API, count, current, difficulty, questions.length, scores, sessionSaved, type]);
+  }, [count, current, difficulty, questions.length, scores, sessionSaved, type]);
 
   const nextQuestion = () => {
     setAnswer("");
