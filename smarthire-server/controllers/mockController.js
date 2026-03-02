@@ -31,7 +31,7 @@ export const getMockQuestions = async (req, res) => {
       });
     }
 
-    const sampleSize = Math.min(totalAvailable, 5);
+    const sampleSize = Math.min(totalAvailable, 10);
 
     const questions = await Question.aggregate([
       { $match: filter },

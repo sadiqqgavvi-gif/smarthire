@@ -23,7 +23,7 @@ export default function Hero() {
           {/* <button className="px-8 py-4 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition shadow-lg">
             Start Free Trial
           </button> */}
-          <button className="px-8 py-4 bg-white text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition shadow-lg border border-gray-200 flex items-center justify-center gap-2">
+          {/* <button className="px-8 py-4 bg-white text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition shadow-lg border border-gray-200 flex items-center justify-center gap-2">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               className="w-5 h-5"
@@ -35,7 +35,7 @@ export default function Hero() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             Watch Demo
-          </button>
+          </button> */}
         </div>
 
         <div className="mt-16 relative">

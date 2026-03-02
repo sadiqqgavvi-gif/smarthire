@@ -1,8 +1,8 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const difficulties = ["Easy", "Medium", "Hard"];
-const questionCounts = [1, 3, 5];
+const questionCounts = [1, 3, 5, 10];
 
 export default function ConfigurePractice() {
   const { type } = useParams();
@@ -15,6 +15,10 @@ export default function ConfigurePractice() {
   const [count, setCount] = useState(3);
   const [mode, setMode] = useState("practice"); // NEW
   const [role] = useState("");
+
+  useEffect(() => {
+    setCount(mode === "mock" ? 10 : 3);
+  }, [mode]);
 
   const startPractice = () => {
     const params = new URLSearchParams({
@@ -102,28 +106,28 @@ export default function ConfigurePractice() {
 ) : null}
 
         {/* Question Count */}
-       {mode === "practice" && (
-  <div className="mb-6">
-    <p className="text-sm text-gray-500 mb-2">
-      Number of Questions
-    </p>
-    <div className="flex gap-3">
-      {questionCounts.map((q) => (
-        <button
-          key={q}
-          onClick={() => setCount(q)}
-          className={`px-4 py-2 rounded-full border ${
-            count === q
-              ? "bg-gray-900 text-white border-gray-900"
-              : "border-gray-300"
-          }`}
-        >
-          {q}
-        </button>
-      ))}
-    </div>
-  </div>
-)}
+        {mode === "practice" && (
+          <div className="mb-6">
+            <p className="text-sm text-gray-500 mb-2">
+              Number of Questions
+            </p>
+            <div className="flex gap-3">
+              {questionCounts.map((q) => (
+                <button
+                  key={q}
+                  onClick={() => setCount(q)}
+                  className={`px-4 py-2 rounded-full border ${
+                    count === q
+                      ? "bg-gray-900 text-white border-gray-900"
+                      : "border-gray-300"
+                  }`}
+                >
+                  {q}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
         <button
           onClick={startPractice}
           className="w-full bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700"

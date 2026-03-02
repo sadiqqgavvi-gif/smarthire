@@ -7,7 +7,7 @@ export default function MockInterview() {
   const { type } = useParams();
   const [searchParams] = useSearchParams();
 
-  const count = searchParams.get("count") || 3;
+  const count = searchParams.get("count") || 10;
   const difficulty = searchParams.get("difficulty")?.toLowerCase() || "medium";
 
   const [questions, setQuestions] = useState([]);
