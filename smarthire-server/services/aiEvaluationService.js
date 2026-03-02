@@ -1,6 +1,7 @@
 import OpenAI from "openai";
 import Question from "../models/questionModel.js";
 import { smartEvaluate } from "./smartEvaluator.js";
+import { evaluateWithPython, isPythonEvaluatorEnabled } from "./pythonEvaluationService.js";
 
 const DEFAULT_MODEL = process.env.OPENAI_EVALUATION_MODEL || "gpt-4o-mini";
 const INVALID_OPENAI_KEYS = new Set(["", "your_key_here", "YOUR_KEY_HERE"]);
@@ -209,6 +210,35 @@ export const evaluateInterviewAnswer = async ({
   }
 
   const questionContext = await loadQuestionContext(safeQuestion, safeCategory);
+
+  if (isPythonEvaluatorEnabled()) {
+    try {
+      const pythonResult = await evaluateWithPython({
+        question: safeQuestion,
+        answer: safeAnswer,
+        category: safeCategory,
+        mode,
+        expectedKeywords: questionContext?.expected_keywords || [],
+        sampleAnswer: questionContext?.sample_answer || "",
+        useAi: process.env.USE_AI === "true",
+        openaiApiKey: process.env.OPENAI_API_KEY || "",
+        model: DEFAULT_MODEL,
+      });
+
+      if (pythonResult && typeof pythonResult === "object") {
+        const normalized = normalizeEvaluation(pythonResult);
+        return {
+          ...normalized,
+          feedback: normalized.overall_feedback,
+          source: pythonResult.source || "python-evaluator",
+          model: pythonResult.model || null,
+          usedQuestionContext: Boolean(questionContext),
+        };
+      }
+    } catch (pythonError) {
+      console.warn("Python evaluator failed. Falling back to Node evaluator:", pythonError);
+    }
+  }
 
   const client = getOpenAiClient();
 
