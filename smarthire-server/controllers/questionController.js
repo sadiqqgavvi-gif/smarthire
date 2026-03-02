@@ -1,4 +1,5 @@
 import Question from "../models/questionModel.js";
+import { sendError, sendSuccess } from "../utils/apiResponse.js";
 
 const buildUniqueQuestionPipeline = (filter, size, excludedQuestions = []) => {
   const pipeline = [
@@ -46,8 +47,9 @@ export const getQuestions = async (req, res) => {
     const count = Number.isFinite(parsedCount) && parsedCount > 0 ? parsedCount : 5;
 
     if (!category) {
-      return res.status(400).json({
-        success: false,
+      return sendError(res, {
+        status: 400,
+        code: "VALIDATION_ERROR",
         message: "Category is required",
       });
     }
@@ -79,16 +81,16 @@ export const getQuestions = async (req, res) => {
 
     console.log(`Returned ${questions.length} questions`);
 
-    return res.json({
-      success: true,
+    return sendSuccess(res, {
       total: questions.length,
       questions,
     });
   } catch (error) {
     console.error("getQuestions error:", error);
 
-    return res.status(500).json({
-      success: false,
+    return sendError(res, {
+      status: 500,
+      code: "QUESTIONS_FETCH_ERROR",
       message: "Server error while fetching questions",
     });
   }

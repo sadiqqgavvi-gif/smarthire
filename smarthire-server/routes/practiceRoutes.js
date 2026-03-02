@@ -3,6 +3,7 @@ import Question from "../models/questionModel.js";
 import protect from "../middleware/authMiddleware.js";
 import PracticeSession from "../models/PracticeSession.js";
 import { validatePracticeSessionPayload } from "../middleware/validationMiddleware.js";
+import { sendError, sendSuccess } from "../utils/apiResponse.js";
 
 const router = express.Router();
 
@@ -53,7 +54,11 @@ router.post("/sessions", protect, validatePracticeSessionPayload, async (req, re
     } = req.body;
 
     if (!category) {
-      return res.status(400).json({ message: "Category is required" });
+      return sendError(res, {
+        status: 400,
+        code: "VALIDATION_ERROR",
+        message: "Category is required",
+      });
     }
 
     const doc = await PracticeSession.create({
@@ -66,10 +71,14 @@ router.post("/sessions", protect, validatePracticeSessionPayload, async (req, re
       averageScore: Number(averageScore) || 0,
     });
 
-    return res.status(201).json({ success: true, session: doc });
+    return sendSuccess(res, { session: doc }, 201);
   } catch (err) {
     console.error("Failed to save practice session:", err);
-    return res.status(500).json({ message: "Failed to save session" });
+    return sendError(res, {
+      status: 500,
+      code: "PRACTICE_SESSION_SAVE_FAILED",
+      message: "Failed to save session",
+    });
   }
 });
 
@@ -100,15 +109,18 @@ router.get("/sessions/me", protect, async (req, res) => {
       score: Math.round(values.reduce((a, b) => a + b, 0) / values.length) * 10,
     }));
 
-    return res.json({
-      success: true,
+    return sendSuccess(res, {
       stats: { totalSessions, completedInterviews, overallScore },
       categoryScores,
       sessions,
     });
   } catch (err) {
     console.error("Failed to load sessions:", err);
-    return res.status(500).json({ message: "Failed to load sessions" });
+    return sendError(res, {
+      status: 500,
+      code: "PRACTICE_SESSION_LOAD_FAILED",
+      message: "Failed to load sessions",
+    });
   }
 });
 
@@ -141,10 +153,14 @@ router.get("/:type", async (req, res) => {
       questions = [...questions, ...extraQuestions];
     }
 
-    res.json({ questions });
+    return sendSuccess(res, { questions });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Server error" });
+    return sendError(res, {
+      status: 500,
+      code: "PRACTICE_QUESTIONS_FETCH_FAILED",
+      message: "Server error",
+    });
   }
 });
 

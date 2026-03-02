@@ -49,11 +49,16 @@ def tokenize(text):
     return [w for w in re.split(r"[^a-zA-Z0-9]+", text.lower()) if len(w) > 3]
 
 
+def is_consonant_heavy(word):
+    return len(word) >= 4 and re.match(r"^[a-z]+$", word) and not re.search(r"[aeiou]", word)
+
+
 def heuristic_eval(question, answer, expected_keywords):
     answer_lower = answer.lower()
-    words = tokenize(answer)
-    word_count = len(words)
+    answer_words = [w for w in re.split(r"\s+", answer.strip()) if w]
+    word_count = len(answer_words)
 
+    words = tokenize(answer)
     question_terms = [w for w in tokenize(question) if len(w) > 4][:20]
     question_hits = sum(1 for term in question_terms if term in answer_lower)
 
@@ -69,13 +74,25 @@ def heuristic_eval(question, answer, expected_keywords):
         if marker in answer_lower:
             structure_hits += 1
 
-    base = 3
-    depth_points = min(3, word_count // 45)
-    relevance_points = min(2, question_hits // 2) + min(2, keyword_hits)
+    consonant_heavy_words = sum(1 for word in words if is_consonant_heavy(word))
+    heavy_ratio = (consonant_heavy_words / len(words)) if words else 0
+
+    base = 1
+    depth_points = min(3, word_count // 40)
+    relevance_points = min(3, question_hits) + min(3, keyword_hits)
     structure_points = 1 if structure_hits >= 2 else 0
 
     score = clamp_score(base + depth_points + relevance_points + structure_points)
     score = score if score is not None else 5
+
+    off_topic = question_hits == 0 and keyword_hits == 0
+
+    if word_count < 4:
+        score = min(score, 2)
+    if off_topic:
+        score = min(score, 3)
+    if off_topic and word_count <= 30 and heavy_ratio >= 0.55:
+        score = min(score, 2)
 
     strengths = []
     weaknesses = []
@@ -96,6 +113,9 @@ def heuristic_eval(question, answer, expected_keywords):
         strengths.append("Shows basic answer structure.")
     else:
         weaknesses.append("Organize answer with clearer flow.")
+
+    if off_topic:
+        weaknesses.append("Response is not directly relevant to the asked question.")
 
     if not strengths:
         strengths = ["The answer attempts the question."]
@@ -140,6 +160,10 @@ Question-specific context from dataset (if available):
 - Sample answer guidance: {sample_line}
 
 Evaluate only against the exact asked question and context.
+Hard constraints:
+- If the answer is nonsensical, unreadable, or mostly off-topic, score must be between 1 and 3.
+- Do not reward length if relevance is weak.
+
 Return strict JSON only:
 {{
   "score": number (1-10 integer),
@@ -177,12 +201,7 @@ def call_openai(api_key, model, prompt):
     with urllib.request.urlopen(req, timeout=15) as resp:
         raw = json.loads(resp.read().decode("utf-8"))
 
-    content = (
-        raw.get("choices", [{}])[0]
-        .get("message", {})
-        .get("content", "")
-        .strip()
-    )
+    content = raw.get("choices", [{}])[0].get("message", {}).get("content", "").strip()
     if not content:
         raise ValueError("OpenAI returned empty content.")
 
@@ -249,4 +268,3 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
-

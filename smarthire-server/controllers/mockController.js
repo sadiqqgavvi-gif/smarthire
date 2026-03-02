@@ -1,5 +1,6 @@
 import Question from "../models/questionModel.js";
 import { evaluateInterviewAnswer } from "../services/aiEvaluationService.js";
+import { sendError, sendSuccess } from "../utils/apiResponse.js";
 
 // ================= GET MOCK QUESTIONS =================
 export const getMockQuestions = async (req, res) => {
@@ -10,8 +11,9 @@ export const getMockQuestions = async (req, res) => {
     const allowedCategories = ["technical", "behavioral", "situational"];
 
     if (!category || !allowedCategories.includes(category)) {
-      return res.status(400).json({
-        success: false,
+      return sendError(res, {
+        status: 400,
+        code: "VALIDATION_ERROR",
         message: "Valid category is required (technical, behavioral, situational)",
       });
     }
@@ -22,8 +24,9 @@ export const getMockQuestions = async (req, res) => {
     const totalAvailable = await Question.countDocuments(filter);
 
     if (totalAvailable === 0) {
-      return res.status(404).json({
-        success: false,
+      return sendError(res, {
+        status: 404,
+        code: "NOT_FOUND",
         message: "No questions found for this category/role",
       });
     }
@@ -35,17 +38,17 @@ export const getMockQuestions = async (req, res) => {
       { $sample: { size: sampleSize } },
     ]);
 
-    return res.status(200).json({
-      success: true,
+    return sendSuccess(res, {
       category,
       total: questions.length,
       questions,
-    });
+    }, 200);
 
   } catch (err) {
     console.error("Mock Interview Error:", err);
-    return res.status(500).json({
-      success: false,
+    return sendError(res, {
+      status: 500,
+      code: "MOCK_FETCH_ERROR",
       message: "Mock interview error",
     });
   }
@@ -57,8 +60,9 @@ export const evaluateMockAnswer = async (req, res) => {
     const { question, answer, category } = req.body;
 
     if (!question || !answer) {
-      return res.status(400).json({
-        success: false,
+      return sendError(res, {
+        status: 400,
+        code: "VALIDATION_ERROR",
         message: "Question and answer are required",
       });
     }
@@ -69,15 +73,15 @@ export const evaluateMockAnswer = async (req, res) => {
       mode: "mock",
     });
 
-    return res.status(200).json({
-      success: true,
+    return sendSuccess(res, {
       evaluation,
-    });
+    }, 200);
 
   } catch (error) {
     console.error("Unexpected Evaluation Error:", error);
-    return res.status(500).json({
-      success: false,
+    return sendError(res, {
+      status: 500,
+      code: "MOCK_EVALUATION_FAILED",
       message: "AI evaluation failed due to server error",
     });
   }

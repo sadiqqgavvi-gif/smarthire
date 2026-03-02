@@ -1,7 +1,12 @@
 import OpenAI from "openai";
 import Question from "../models/questionModel.js";
+import { cleanQuestionText } from "../utils/questionExtractor.js";
 import { smartEvaluate } from "./smartEvaluator.js";
-import { evaluateWithPython, isPythonEvaluatorEnabled } from "./pythonEvaluationService.js";
+import { applyEvaluationGuardrails } from "./evaluationGuardrails.js";
+import {
+  evaluateWithPython,
+  isPythonEvaluatorEnabled,
+} from "./pythonEvaluationService.js";
 
 const DEFAULT_MODEL = process.env.OPENAI_EVALUATION_MODEL || "gpt-4o-mini";
 const INVALID_OPENAI_KEYS = new Set(["", "your_key_here", "YOUR_KEY_HERE"]);
@@ -33,6 +38,14 @@ const toStringOrFallback = (value, fallback = "") => {
   if (typeof value !== "string") return fallback;
   const trimmed = value.trim();
   return trimmed || fallback;
+};
+
+const normalizeQuestionInput = (value) => {
+  const raw = toStringOrFallback(value);
+  if (!raw) return "";
+
+  const cleaned = cleanQuestionText(raw);
+  return cleaned || raw;
 };
 
 const normalizeScore = (value) => {
@@ -86,7 +99,7 @@ const parseEvaluationJson = (content) => {
 };
 
 const loadQuestionContext = async (question, category) => {
-  const cleanQuestion = toStringOrFallback(question);
+  const cleanQuestion = normalizeQuestionInput(question);
   if (!cleanQuestion) return null;
 
   const questionRegex = new RegExp(`^${escapeRegex(cleanQuestion)}$`, "i");
@@ -173,6 +186,10 @@ Question-specific context from dataset (if available):
 - Sample answer guidance: ${sampleAnswer || "Not provided"}
 
 Evaluate ONLY against the asked question and context above.
+Hard constraints:
+- If the answer is nonsensical, unreadable, or mostly off-topic, score must be between 1 and 3.
+- Do not reward length if relevance is weak.
+
 Primary weighting:
 1) Relevance to the exact question (40%)
 2) ${selectedRubric[0]} (25%)
@@ -189,13 +206,38 @@ Return STRICT JSON only:
 }`;
 };
 
+const finalizeEvaluation = ({
+  rawEvaluation,
+  source,
+  model = null,
+  question,
+  answer,
+  expectedKeywords = [],
+  usedQuestionContext = false,
+}) => {
+  const normalized = normalizeEvaluation(rawEvaluation);
+  const guarded = applyEvaluationGuardrails(normalized, {
+    question,
+    answer,
+    expectedKeywords,
+  });
+
+  return {
+    ...guarded,
+    feedback: guarded.overall_feedback,
+    source,
+    model,
+    usedQuestionContext,
+  };
+};
+
 export const evaluateInterviewAnswer = async ({
   question,
   answer,
   category = "general",
   mode = "practice",
 }) => {
-  const safeQuestion = toStringOrFallback(question);
+  const safeQuestion = normalizeQuestionInput(question);
   const safeAnswer = toStringOrFallback(answer);
   const safeCategory = normalizeCategory(category) || "general";
 
@@ -210,6 +252,7 @@ export const evaluateInterviewAnswer = async ({
   }
 
   const questionContext = await loadQuestionContext(safeQuestion, safeCategory);
+  const expectedKeywords = questionContext?.expected_keywords || [];
 
   if (isPythonEvaluatorEnabled()) {
     try {
@@ -218,7 +261,7 @@ export const evaluateInterviewAnswer = async ({
         answer: safeAnswer,
         category: safeCategory,
         mode,
-        expectedKeywords: questionContext?.expected_keywords || [],
+        expectedKeywords,
         sampleAnswer: questionContext?.sample_answer || "",
         useAi: process.env.USE_AI === "true",
         openaiApiKey: process.env.OPENAI_API_KEY || "",
@@ -226,14 +269,15 @@ export const evaluateInterviewAnswer = async ({
       });
 
       if (pythonResult && typeof pythonResult === "object") {
-        const normalized = normalizeEvaluation(pythonResult);
-        return {
-          ...normalized,
-          feedback: normalized.overall_feedback,
+        return finalizeEvaluation({
+          rawEvaluation: pythonResult,
           source: pythonResult.source || "python-evaluator",
           model: pythonResult.model || null,
+          question: safeQuestion,
+          answer: safeAnswer,
+          expectedKeywords,
           usedQuestionContext: Boolean(questionContext),
-        };
+        });
       }
     } catch (pythonError) {
       console.warn("Python evaluator failed. Falling back to Node evaluator:", pythonError);
@@ -244,12 +288,14 @@ export const evaluateInterviewAnswer = async ({
 
   if (!client) {
     const fallback = smartEvaluate(safeQuestion, safeAnswer, safeCategory);
-    return {
-      ...fallback,
-      feedback: fallback.overall_feedback,
+    return finalizeEvaluation({
+      rawEvaluation: fallback,
       source: "smart-evaluator",
+      question: safeQuestion,
+      answer: safeAnswer,
+      expectedKeywords,
       usedQuestionContext: Boolean(questionContext),
-    };
+    });
   }
 
   try {
@@ -266,8 +312,7 @@ export const evaluateInterviewAnswer = async ({
       messages: [
         {
           role: "system",
-          content:
-            "You evaluate interview answers fairly and return only valid JSON.",
+          content: "You evaluate interview answers fairly and return only valid JSON.",
         },
         {
           role: "user",
@@ -285,24 +330,26 @@ export const evaluateInterviewAnswer = async ({
       throw new Error("AI evaluator returned invalid JSON.");
     }
 
-    const evaluation = normalizeEvaluation(parsed);
-
-    return {
-      ...evaluation,
-      feedback: evaluation.overall_feedback,
+    return finalizeEvaluation({
+      rawEvaluation: parsed,
       source: "openai",
       model: DEFAULT_MODEL,
+      question: safeQuestion,
+      answer: safeAnswer,
+      expectedKeywords,
       usedQuestionContext: Boolean(questionContext),
-    };
+    });
   } catch (error) {
     console.error("AI evaluation failed. Falling back to smart evaluator:", error);
     const fallback = smartEvaluate(safeQuestion, safeAnswer, safeCategory);
 
-    return {
-      ...fallback,
-      feedback: fallback.overall_feedback,
+    return finalizeEvaluation({
+      rawEvaluation: fallback,
       source: "smart-evaluator",
+      question: safeQuestion,
+      answer: safeAnswer,
+      expectedKeywords,
       usedQuestionContext: Boolean(questionContext),
-    };
+    });
   }
 };

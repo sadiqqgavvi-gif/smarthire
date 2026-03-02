@@ -1,66 +1,41 @@
-import express from "express";
-import cors from "cors";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
-import questionRoutes from "./routes/questionRoutes.js";
-import authRoutes from "./routes/authRoutes.js";
-import contactRoutes from "./routes/contactRoutes.js";
-import aiRoutes from "./routes/aiRoutes.js";
-import practiceRoutes from "./routes/practiceRoutes.js";
-import mockRoutes from "./routes/mockRoutes.js";
-import { notFound, errorHandler } from "./utils/errorHandler.js";
+import app from "./app.js";
 
 dotenv.config();
-const app = express();
 
-const allowedOrigins = (
-  process.env.CLIENT_ORIGINS ||
-  "http://localhost:5173,http://localhost:5174,http://127.0.0.1:5173,http://127.0.0.1:5174"
-)
-  .split(",")
-  .map((origin) => origin.trim())
-  .filter(Boolean);
+const PORT = Number(process.env.PORT) || 5000;
+const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/smarthire";
+const MONGO_CONNECT_TIMEOUT_MS = Number(process.env.MONGO_CONNECT_TIMEOUT_MS) || 10000;
 
-  
-// --- CORS setup ---
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
-      return callback(new Error(`Blocked by CORS: ${origin}`));
-    },
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-    credentials: true,
-  })
-);
+const start = async () => {
+  try {
+    await mongoose.connect(MONGO_URI, {
+      serverSelectionTimeoutMS: MONGO_CONNECT_TIMEOUT_MS,
+    });
+    console.log("MongoDB connected");
+  } catch (err) {
+    console.error("MongoDB connection error:", err);
+    process.exit(1);
+  }
 
-// --- Middleware ---
-app.use(express.json());
+  const server = app.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+  });
 
-app.use("/api/mock", mockRoutes);
+  const shutdown = async (signal) => {
+    console.log(`${signal} received. Shutting down gracefully...`);
+    server.close(async () => {
+      try {
+        await mongoose.connection.close();
+      } finally {
+        process.exit(0);
+      }
+    });
+  };
 
-// --- Routes ---
-app.use("/api/practice", practiceRoutes);
-app.use("/api/auth", authRoutes);
-app.use("/api/contact", contactRoutes);
-app.use("/api/ai", aiRoutes);
-app.use("/api/questions", questionRoutes); // ✅ Mount questionRoutes here
+  process.on("SIGINT", () => shutdown("SIGINT"));
+  process.on("SIGTERM", () => shutdown("SIGTERM"));
+};
 
-
-
-// --- MongoDB connection ---
-mongoose
-  .connect(process.env.MONGO_URI || "mongodb://localhost:27017/smarthire")
-  .then(() => console.log("✅ MongoDB connected"))
-  .catch((err) => console.error("❌ MongoDB connection error:", err));
-
-// --- Root route ---
-app.get("/", (req, res) => res.send("SmartHire Backend Running ✅"));
-
-app.use(notFound);
-app.use(errorHandler);
-
-// --- Start server ---
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
+start();

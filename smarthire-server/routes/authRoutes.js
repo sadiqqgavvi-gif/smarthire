@@ -5,20 +5,20 @@ import crypto from "crypto";
 import User from "../models/User.js";
 import protect from "../middleware/authMiddleware.js";
 import { validateAuthPayload } from "../middleware/validationMiddleware.js";
+import { sendError, sendSuccess } from "../utils/apiResponse.js";
 
 const router = express.Router();
 
 const ACCESS_COOKIE_NAME = "accessToken";
 const REFRESH_COOKIE_NAME = "refreshToken";
 
-const parseCookies = (cookieHeader = "") => {
-  return cookieHeader.split(";").reduce((acc, part) => {
+const parseCookies = (cookieHeader = "") =>
+  cookieHeader.split(";").reduce((acc, part) => {
     const [key, ...valueParts] = part.trim().split("=");
     if (!key) return acc;
     acc[key] = decodeURIComponent(valueParts.join("=") || "");
     return acc;
   }, {});
-};
 
 const hashToken = (token) =>
   crypto.createHash("sha256").update(token).digest("hex");
@@ -78,7 +78,7 @@ const resolveLogoutUserId = async (req) => {
       );
       if (decoded?.id) return decoded.id;
     } catch {
-      // Fall through to refresh token check.
+      // fall through to refresh token
     }
   }
 
@@ -102,14 +102,19 @@ const resolveLogoutUserId = async (req) => {
   }
 };
 
-// Register User
 router.post("/register", validateAuthPayload, async (req, res) => {
   try {
     const { email, password } = req.body;
     const normalizedEmail = email.trim().toLowerCase();
 
     const existingUser = await User.findOne({ email: normalizedEmail });
-    if (existingUser) return res.status(400).json({ message: "User already exists" });
+    if (existingUser) {
+      return sendError(res, {
+        status: 400,
+        code: "USER_ALREADY_EXISTS",
+        message: "User already exists",
+      });
+    }
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = new User({ email: normalizedEmail, password: hashedPassword });
@@ -123,7 +128,7 @@ router.post("/register", validateAuthPayload, async (req, res) => {
 
     setAuthCookies(res, accessToken, refreshToken);
 
-    res.json({
+    return sendSuccess(res, {
       message: "Registration successful",
       user: {
         id: newUser._id,
@@ -133,21 +138,36 @@ router.post("/register", validateAuthPayload, async (req, res) => {
       },
     });
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    return sendError(res, {
+      status: 500,
+      code: "AUTH_REGISTER_FAILED",
+      message: "Server error",
+    });
   }
 });
 
-// Login User
 router.post("/login", validateAuthPayload, async (req, res) => {
   try {
     const { email, password } = req.body;
     const normalizedEmail = email.trim().toLowerCase();
 
     const user = await User.findOne({ email: normalizedEmail });
-    if (!user) return res.status(404).json({ message: "User not found" });
+    if (!user) {
+      return sendError(res, {
+        status: 404,
+        code: "USER_NOT_FOUND",
+        message: "User not found",
+      });
+    }
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
+    if (!isMatch) {
+      return sendError(res, {
+        status: 400,
+        code: "INVALID_CREDENTIALS",
+        message: "Invalid credentials",
+      });
+    }
 
     const accessToken = signAccessToken(user);
     const refreshToken = signRefreshToken(user);
@@ -158,7 +178,7 @@ router.post("/login", validateAuthPayload, async (req, res) => {
 
     setAuthCookies(res, accessToken, refreshToken);
 
-    res.json({
+    return sendSuccess(res, {
       message: "Login successful",
       user: {
         id: user._id,
@@ -168,20 +188,27 @@ router.post("/login", validateAuthPayload, async (req, res) => {
       },
     });
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    return sendError(res, {
+      status: 500,
+      code: "AUTH_LOGIN_FAILED",
+      message: "Server error",
+    });
   }
 });
 
-// Verify token + return current user
 router.get("/me", protect, async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select("_id email");
+    const user = await User.findById(req.user.id).select("_id email role permissions");
 
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return sendError(res, {
+        status: 404,
+        code: "USER_NOT_FOUND",
+        message: "User not found",
+      });
     }
 
-    return res.json({
+    return sendSuccess(res, {
       user: {
         id: user._id,
         email: user.email,
@@ -189,8 +216,12 @@ router.get("/me", protect, async (req, res) => {
         permissions: user.permissions || [],
       },
     });
-  } catch (error) {
-    return res.status(500).json({ message: "Server error" });
+  } catch {
+    return sendError(res, {
+      status: 500,
+      code: "AUTH_ME_FAILED",
+      message: "Server error",
+    });
   }
 });
 
@@ -201,7 +232,11 @@ router.post("/refresh", async (req, res) => {
 
     if (!refreshToken) {
       clearAuthCookies(res);
-      return res.status(401).json({ message: "Refresh token missing" });
+      return sendError(res, {
+        status: 401,
+        code: "REFRESH_TOKEN_MISSING",
+        message: "Refresh token missing",
+      });
     }
 
     const decoded = jwt.verify(
@@ -211,7 +246,11 @@ router.post("/refresh", async (req, res) => {
 
     if (decoded.type !== "refresh") {
       clearAuthCookies(res);
-      return res.status(401).json({ message: "Invalid refresh token" });
+      return sendError(res, {
+        status: 401,
+        code: "REFRESH_TOKEN_INVALID",
+        message: "Invalid refresh token",
+      });
     }
 
     const user = await User.findById(decoded.id).select(
@@ -220,12 +259,20 @@ router.post("/refresh", async (req, res) => {
 
     if (!user || !user.refreshTokenHash) {
       clearAuthCookies(res);
-      return res.status(401).json({ message: "Session expired" });
+      return sendError(res, {
+        status: 401,
+        code: "SESSION_EXPIRED",
+        message: "Session expired",
+      });
     }
 
     if (hashToken(refreshToken) !== user.refreshTokenHash) {
       clearAuthCookies(res);
-      return res.status(401).json({ message: "Session invalidated" });
+      return sendError(res, {
+        status: 401,
+        code: "SESSION_INVALIDATED",
+        message: "Session invalidated",
+      });
     }
 
     const newAccessToken = signAccessToken(user);
@@ -236,7 +283,7 @@ router.post("/refresh", async (req, res) => {
 
     setAuthCookies(res, newAccessToken, newRefreshToken);
 
-    return res.json({
+    return sendSuccess(res, {
       message: "Session refreshed",
       user: {
         id: user._id,
@@ -247,7 +294,11 @@ router.post("/refresh", async (req, res) => {
     });
   } catch {
     clearAuthCookies(res);
-    return res.status(401).json({ message: "Refresh failed" });
+    return sendError(res, {
+      status: 401,
+      code: "REFRESH_FAILED",
+      message: "Refresh failed",
+    });
   }
 });
 
@@ -260,10 +311,14 @@ router.post("/logout", async (req, res) => {
     }
 
     clearAuthCookies(res);
-    return res.json({ message: "Logged out successfully" });
+    return sendSuccess(res, { message: "Logged out successfully" });
   } catch {
     clearAuthCookies(res);
-    return res.status(500).json({ message: "Logout failed" });
+    return sendError(res, {
+      status: 500,
+      code: "LOGOUT_FAILED",
+      message: "Logout failed",
+    });
   }
 });
 

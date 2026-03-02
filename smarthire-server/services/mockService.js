@@ -1,5 +1,9 @@
 import fs from "fs";
 import path from "path";
+import {
+  extractQuestionsFromMarkdown,
+  normalizeQuestionKey,
+} from "../utils/questionExtractor.js";
 
 const BASE_PATH = path.join(process.cwd(), "topics", "en");
 
@@ -11,27 +15,29 @@ export const getRandomMockQuestions = (category, count = 5) => {
   }
 
   const files = fs.readdirSync(categoryPath);
+  const seen = new Set();
+  const allQuestions = [];
 
-  let allQuestions = [];
-
-  files.forEach((file) => {
+  for (const file of files) {
     const filePath = path.join(categoryPath, file);
+    if (!fs.statSync(filePath).isFile()) continue;
+
     const content = fs.readFileSync(filePath, "utf-8");
+    const questions = extractQuestionsFromMarkdown(content);
 
-    // Assuming each question is separated by newline or numbered
-    const questions = content
-      .split("\n")
-      .filter((line) => line.trim().length > 10);
+    for (const question of questions) {
+      const key = normalizeQuestionKey(question);
+      if (!key || seen.has(key)) continue;
 
-    allQuestions.push(...questions);
-  });
+      seen.add(key);
+      allQuestions.push(question);
+    }
+  }
 
   if (allQuestions.length < count) {
     throw new Error("Not enough questions in dataset");
   }
 
-  // Shuffle
   const shuffled = allQuestions.sort(() => 0.5 - Math.random());
-
   return shuffled.slice(0, count);
 };

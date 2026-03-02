@@ -3,17 +3,22 @@ import {
   evaluateWithPython,
   getPythonEvaluatorInfo,
 } from "../services/pythonEvaluationService.js";
+import { sendError, sendSuccess } from "../utils/apiResponse.js";
 
 export const evaluateInterview = async (req, res) => {
   try {
     const { question, answer, category } = req.body;
 
     if (!answer || typeof answer !== "string" || !answer.trim()) {
-      return res.status(400).json({
-        success: false,
-        score: 0,
-        feedback: "No answer provided.",
-        improvement: "Try answering the question clearly and concisely.",
+      return sendError(res, {
+        status: 400,
+        code: "VALIDATION_ERROR",
+        message: "No answer provided.",
+        details: {
+          score: 0,
+          feedback: "No answer provided.",
+          improvement: "Try answering the question clearly and concisely.",
+        },
       });
     }
 
@@ -24,15 +29,15 @@ export const evaluateInterview = async (req, res) => {
       mode: "practice",
     });
 
-    return res.json({
-      success: true,
+    return sendSuccess(res, {
       ...evaluation,
     });
   } catch (error) {
     console.error("Evaluation Error:", error);
 
-    return res.status(500).json({
-      success: false,
+    return sendError(res, {
+      status: 500,
+      code: "AI_EVALUATION_FAILED",
       message: "Evaluation failed",
     });
   }
@@ -42,8 +47,7 @@ export const getPythonHealth = async (_req, res) => {
   const info = getPythonEvaluatorInfo();
 
   if (!info.enabled) {
-    return res.json({
-      success: true,
+    return sendSuccess(res, {
       status: "disabled",
       ...info,
       message: "Set USE_PYTHON_EVALUATOR=true to enable Python evaluator.",
@@ -51,11 +55,14 @@ export const getPythonHealth = async (_req, res) => {
   }
 
   if (!info.scriptExists) {
-    return res.status(500).json({
-      success: false,
-      status: "error",
-      ...info,
+    return sendError(res, {
+      status: 500,
+      code: "PYTHON_EVALUATOR_MISSING",
       message: "Python evaluator script is missing.",
+      details: {
+        status: "error",
+        ...info,
+      },
     });
   }
 
@@ -73,8 +80,7 @@ export const getPythonHealth = async (_req, res) => {
       model: process.env.OPENAI_EVALUATION_MODEL || "gpt-4o-mini",
     });
 
-    return res.json({
-      success: true,
+    return sendSuccess(res, {
       status: "ok",
       ...info,
       probe: {
@@ -83,11 +89,14 @@ export const getPythonHealth = async (_req, res) => {
       },
     });
   } catch (error) {
-    return res.status(503).json({
-      success: false,
-      status: "error",
-      ...info,
+    return sendError(res, {
+      status: 503,
+      code: "PYTHON_HEALTH_CHECK_FAILED",
       message: error.message || "Python evaluator health check failed.",
+      details: {
+        status: "error",
+        ...info,
+      },
     });
   }
 };

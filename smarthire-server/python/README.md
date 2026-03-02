@@ -25,4 +25,4 @@ OPENAI_EVALUATION_MODEL=gpt-4o-mini
 - If `USE_PYTHON_EVALUATOR=true`, Node calls `python/evaluate_answer.py`.
 - If Python evaluation fails, server falls back to Node evaluator logic automatically.
 - If AI is disabled or key is invalid, Python evaluator uses heuristic scoring.
-
+- Guardrails cap inflated scores for very short, gibberish, or off-topic answers.

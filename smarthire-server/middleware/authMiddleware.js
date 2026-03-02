@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+import { sendError } from "../utils/apiResponse.js";
 
 const ACCESS_COOKIE_NAME = "accessToken";
 
@@ -21,11 +22,19 @@ const protect = (req, res, next) => {
   const token = bearerToken || cookieToken;
 
   if (!token) {
-    return res.status(401).json({ message: "Not authorized, token missing" });
+    return sendError(res, {
+      status: 401,
+      code: "AUTH_TOKEN_MISSING",
+      message: "Not authorized, token missing",
+    });
   }
 
   if (!process.env.ACCESS_TOKEN_SECRET && !process.env.JWT_SECRET) {
-    return res.status(500).json({ message: "JWT_SECRET is not configured" });
+    return sendError(res, {
+      status: 500,
+      code: "AUTH_CONFIG_ERROR",
+      message: "JWT_SECRET is not configured",
+    });
   }
 
   try {
@@ -40,14 +49,22 @@ const protect = (req, res, next) => {
     };
     return next();
   } catch {
-    return res.status(401).json({ message: "Not authorized, token invalid" });
+    return sendError(res, {
+      status: 401,
+      code: "AUTH_TOKEN_INVALID",
+      message: "Not authorized, token invalid",
+    });
   }
 };
 
 export const requireRole = (...allowedRoles) => (req, res, next) => {
   const role = req.user?.role || "user";
   if (!allowedRoles.includes(role)) {
-    return res.status(403).json({ message: "Forbidden: insufficient role" });
+    return sendError(res, {
+      status: 403,
+      code: "FORBIDDEN_ROLE",
+      message: "Forbidden: insufficient role",
+    });
   }
   return next();
 };
@@ -56,7 +73,11 @@ export const requirePermission = (...requiredPermissions) => (req, res, next) =>
   const permissions = req.user?.permissions || [];
   const hasAll = requiredPermissions.every((p) => permissions.includes(p));
   if (!hasAll) {
-    return res.status(403).json({ message: "Forbidden: missing permission" });
+    return sendError(res, {
+      status: 403,
+      code: "FORBIDDEN_PERMISSION",
+      message: "Forbidden: missing permission",
+    });
   }
   return next();
 };

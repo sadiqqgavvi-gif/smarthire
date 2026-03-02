@@ -1,14 +1,19 @@
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const sendValidationError = (res, message, field) =>
-  res.status(400).json({
+  {
+    const requestId = res.locals?.requestId;
+    return res.status(400).json({
     success: false,
+    ...(requestId ? { requestId } : {}),
+    message,
     error: {
       code: "VALIDATION_ERROR",
       message,
       field,
     },
-  });
+    });
+  };
 
 export const validateAuthPayload = (req, res, next) => {
   const { email, password } = req.body || {};
