@@ -11,6 +11,7 @@ const router = express.Router();
 
 const ACCESS_COOKIE_NAME = "accessToken";
 const REFRESH_COOKIE_NAME = "refreshToken";
+const GOOGLE_TOKEN_INFO_URL = "https://oauth2.googleapis.com/tokeninfo";
 
 const parseCookies = (cookieHeader = "") =>
   cookieHeader.split(";").reduce((acc, part) => {
@@ -58,6 +59,26 @@ const signRefreshToken = (user) =>
 const setAuthCookies = (res, accessToken, refreshToken) => {
   res.cookie(ACCESS_COOKIE_NAME, accessToken, accessCookieOptions);
   res.cookie(REFRESH_COOKIE_NAME, refreshToken, refreshCookieOptions);
+};
+
+const buildUserResponse = (user) => ({
+  id: user._id,
+  email: user.email,
+  name: user.name || "",
+  role: user.role,
+  permissions: user.permissions || [],
+  authProvider: user.authProvider || "local",
+});
+
+const issueSession = async (res, user) => {
+  const accessToken = signAccessToken(user);
+  const refreshToken = signRefreshToken(user);
+
+  await User.findByIdAndUpdate(user._id, {
+    refreshTokenHash: hashToken(refreshToken),
+  });
+
+  setAuthCookies(res, accessToken, refreshToken);
 };
 
 const clearAuthCookies = (res) => {
@@ -117,25 +138,18 @@ router.post("/register", validateAuthPayload, async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new User({ email: normalizedEmail, password: hashedPassword });
+    const newUser = new User({
+      email: normalizedEmail,
+      password: hashedPassword,
+      authProvider: "local",
+    });
     await newUser.save();
 
-    const accessToken = signAccessToken(newUser);
-    const refreshToken = signRefreshToken(newUser);
-
-    newUser.refreshTokenHash = hashToken(refreshToken);
-    await newUser.save();
-
-    setAuthCookies(res, accessToken, refreshToken);
+    await issueSession(res, newUser);
 
     return sendSuccess(res, {
       message: "Registration successful",
-      user: {
-        id: newUser._id,
-        email: newUser.email,
-        role: newUser.role,
-        permissions: newUser.permissions,
-      },
+      user: buildUserResponse(newUser),
     });
   } catch (error) {
     return sendError(res, {
@@ -160,6 +174,14 @@ router.post("/login", validateAuthPayload, async (req, res) => {
       });
     }
 
+    if (!user.password) {
+      return sendError(res, {
+        status: 400,
+        code: "GOOGLE_ACCOUNT_ONLY",
+        message: "This account uses Google sign-in. Please continue with Google.",
+      });
+    }
+
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return sendError(res, {
@@ -169,23 +191,11 @@ router.post("/login", validateAuthPayload, async (req, res) => {
       });
     }
 
-    const accessToken = signAccessToken(user);
-    const refreshToken = signRefreshToken(user);
-
-    await User.findByIdAndUpdate(user._id, {
-      refreshTokenHash: hashToken(refreshToken),
-    });
-
-    setAuthCookies(res, accessToken, refreshToken);
+    await issueSession(res, user);
 
     return sendSuccess(res, {
       message: "Login successful",
-      user: {
-        id: user._id,
-        email: user.email,
-        role: user.role,
-        permissions: user.permissions,
-      },
+      user: buildUserResponse(user),
     });
   } catch (error) {
     return sendError(res, {
@@ -196,9 +206,97 @@ router.post("/login", validateAuthPayload, async (req, res) => {
   }
 });
 
+router.post("/google", async (req, res) => {
+  try {
+    const credential = req.body?.credential || req.body?.idToken;
+    const googleClientId = process.env.GOOGLE_CLIENT_ID;
+
+    if (!googleClientId) {
+      return sendError(res, {
+        status: 500,
+        code: "GOOGLE_OAUTH_NOT_CONFIGURED",
+        message: "Google sign-in is not configured on the server",
+      });
+    }
+
+    if (!credential || typeof credential !== "string") {
+      return sendError(res, {
+        status: 400,
+        code: "VALIDATION_ERROR",
+        message: "Google credential is required",
+      });
+    }
+
+    const response = await fetch(
+      `${GOOGLE_TOKEN_INFO_URL}?id_token=${encodeURIComponent(credential)}`
+    );
+    const profile = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      return sendError(res, {
+        status: 401,
+        code: "GOOGLE_TOKEN_INVALID",
+        message: "Google sign-in could not be verified",
+      });
+    }
+
+    if (profile.aud !== googleClientId || String(profile.email_verified).toLowerCase() !== "true") {
+      return sendError(res, {
+        status: 401,
+        code: "GOOGLE_TOKEN_INVALID",
+        message: "Google sign-in could not be verified",
+      });
+    }
+
+    const normalizedEmail = String(profile.email || "").trim().toLowerCase();
+    if (!normalizedEmail) {
+      return sendError(res, {
+        status: 401,
+        code: "GOOGLE_TOKEN_INVALID",
+        message: "Google account email is missing",
+      });
+    }
+
+    let user = await User.findOne({ email: normalizedEmail });
+
+    if (!user) {
+      user = new User({
+        email: normalizedEmail,
+        name: profile.name || profile.given_name || "",
+        password: null,
+        authProvider: "google",
+        googleId: profile.sub || null,
+        avatarUrl: profile.picture || "",
+      });
+      await user.save();
+    } else {
+      user.name = user.name || profile.name || profile.given_name || "";
+      user.authProvider = user.authProvider || "google";
+      user.googleId = user.googleId || profile.sub || null;
+      user.avatarUrl = user.avatarUrl || profile.picture || "";
+      await user.save();
+    }
+
+    await issueSession(res, user);
+
+    return sendSuccess(res, {
+      message: "Google login successful",
+      user: buildUserResponse(user),
+    });
+  } catch (error) {
+    return sendError(res, {
+      status: 500,
+      code: "AUTH_GOOGLE_FAILED",
+      message: "Server error",
+    });
+  }
+});
+
 router.get("/me", protect, async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select("_id email role permissions");
+    const user = await User.findById(req.user.id).select(
+      "_id email name role permissions authProvider"
+    );
 
     if (!user) {
       return sendError(res, {
@@ -209,12 +307,7 @@ router.get("/me", protect, async (req, res) => {
     }
 
     return sendSuccess(res, {
-      user: {
-        id: user._id,
-        email: user.email,
-        role: user.role,
-        permissions: user.permissions || [],
-      },
+      user: buildUserResponse(user),
     });
   } catch {
     return sendError(res, {
@@ -254,7 +347,7 @@ router.post("/refresh", async (req, res) => {
     }
 
     const user = await User.findById(decoded.id).select(
-      "_id email role permissions refreshTokenHash"
+      "_id email name role permissions authProvider refreshTokenHash"
     );
 
     if (!user || !user.refreshTokenHash) {
@@ -285,12 +378,7 @@ router.post("/refresh", async (req, res) => {
 
     return sendSuccess(res, {
       message: "Session refreshed",
-      user: {
-        id: user._id,
-        email: user.email,
-        role: user.role,
-        permissions: user.permissions || [],
-      },
+      user: buildUserResponse(user),
     });
   } catch {
     clearAuthCookies(res);

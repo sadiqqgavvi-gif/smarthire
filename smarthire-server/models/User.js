@@ -9,10 +9,34 @@ const UserSchema = new mongoose.Schema(
       trim: true,
       lowercase: true,
     },
+    name: {
+      type: String,
+      default: "",
+      trim: true,
+    },
     password: {
       type: String,
-      required: true,
+      required: false,
+      default: null,
       minlength: 6,
+    },
+    authProvider: {
+      type: String,
+      enum: ["local", "google"],
+      default: "local",
+      lowercase: true,
+      trim: true,
+    },
+    googleId: {
+      type: String,
+      default: null,
+      trim: true,
+      index: true,
+    },
+    avatarUrl: {
+      type: String,
+      default: "",
+      trim: true,
     },
     role: {
       type: String,

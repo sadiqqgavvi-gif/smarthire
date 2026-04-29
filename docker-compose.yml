@@ -35,6 +35,7 @@ services:
       ACCESS_TOKEN_SECRET: change_me_access_secret
       REFRESH_TOKEN_SECRET: change_me_refresh_secret
       CLIENT_ORIGINS: http://localhost:5173
+      GOOGLE_CLIENT_ID: 985458567113-s31o92rcsh3gstj4c9h8lacemtqr3ssr.apps.googleusercontent.com
       OPENAI_API_KEY: ${OPENAI_API_KEY:-your_key_here}
       OPENAI_EVALUATION_MODEL: ${OPENAI_EVALUATION_MODEL:-gpt-4o-mini}
       USE_AI: ${USE_AI:-false}
@@ -70,6 +71,7 @@ services:
       dockerfile: Dockerfile
       args:
         VITE_API_URL: http://localhost:5000
+        VITE_GOOGLE_CLIENT_ID: 985458567113-s31o92rcsh3gstj4c9h8lacemtqr3ssr.apps.googleusercontent.com
     container_name: smarthire-frontend
     restart: unless-stopped
     init: true

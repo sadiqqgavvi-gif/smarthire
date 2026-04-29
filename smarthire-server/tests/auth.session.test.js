@@ -21,7 +21,11 @@ const hashToken = (token) =>
 const cloneUser = (user) => ({
   _id: user._id,
   email: user.email,
-  password: user.password,
+  name: user.name || "",
+  password: user.password ?? null,
+  authProvider: user.authProvider || "local",
+  googleId: user.googleId ?? null,
+  avatarUrl: user.avatarUrl || "",
   role: user.role || "user",
   permissions: user.permissions || [],
   refreshTokenHash: user.refreshTokenHash ?? null,
@@ -212,4 +216,53 @@ test("auth happy path: register -> login -> me -> refresh -> logout", async () =
 
   const afterLogout = usersById.get(userId);
   assert.equal(afterLogout?.refreshTokenHash, null);
+});
+
+test("auth google login creates or reuses a verified google account", async () => {
+  process.env.GOOGLE_CLIENT_ID = "google-client-id-test";
+
+  const originalFetch = global.fetch;
+  global.fetch = async (url, options) => {
+    const asString = String(url);
+
+    if (asString.startsWith("https://oauth2.googleapis.com/tokeninfo")) {
+      return new Response(
+        JSON.stringify({
+          aud: process.env.GOOGLE_CLIENT_ID,
+          email_verified: "true",
+          email: "google.user@example.com",
+          name: "Google User",
+          sub: "google-sub-123",
+          picture: "https://example.com/avatar.png",
+        }),
+        {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    return originalFetch(url, options);
+  };
+
+  try {
+    const googleLoginRes = await requestJson("/api/auth/google", {
+      method: "POST",
+      body: { credential: "google-id-token" },
+    });
+
+    assert.equal(googleLoginRes.response.status, 200);
+    assert.equal(googleLoginRes.json?.message, "Google login successful");
+    assert.equal(googleLoginRes.json?.user?.email, "google.user@example.com");
+    assert.equal(googleLoginRes.json?.user?.authProvider, "google");
+    assert.ok(googleLoginRes.json?.requestId);
+
+    const googleUser = usersByEmail.get("google.user@example.com");
+    assert.ok(googleUser);
+    assert.equal(googleUser?.googleId, "google-sub-123");
+    assert.equal(googleUser?.name, "Google User");
+    assert.equal(googleUser?.avatarUrl, "https://example.com/avatar.png");
+  } finally {
+    global.fetch = originalFetch;
+  }
 });

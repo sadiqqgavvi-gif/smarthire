@@ -57,4 +57,22 @@ describe("Auth page", () => {
     });
     expect(authFetch).toHaveBeenCalledTimes(2);
   });
+
+  test("shows the google sign-in option on the login screen", async () => {
+    authFetch.mockResolvedValue({ ok: false });
+
+    render(
+      <MemoryRouter initialEntries={["/login"]}>
+        <Routes>
+          <Route path="/login" element={<Auth type="login" />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("button", { name: /continue with google/i })
+      ).toBeInTheDocument();
+    });
+  });
 });

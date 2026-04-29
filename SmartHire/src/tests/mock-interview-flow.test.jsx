@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
@@ -17,9 +17,20 @@ const mockJsonResponse = (payload, ok = true, status = 200) => ({
 
 describe("MockInterview flow", () => {
   const fetchMock = vi.fn();
+  const recognitionInstances = [];
 
   beforeEach(() => {
-    fetchMock.mockImplementation(async (url, options) => {
+    recognitionInstances.length = 0;
+
+    class MockSpeechRecognition {
+      constructor() {
+        this.start = vi.fn();
+        this.stop = vi.fn();
+        recognitionInstances.push(this);
+      }
+    }
+
+    fetchMock.mockImplementation(async (url) => {
       const asString = String(url);
 
       if (asString.includes("/api/practice/technical")) {
@@ -45,6 +56,11 @@ describe("MockInterview flow", () => {
     });
 
     vi.stubGlobal("fetch", fetchMock);
+    vi.stubGlobal("SpeechRecognition", MockSpeechRecognition);
+    vi.stubGlobal("speechSynthesis", {
+      cancel: vi.fn(),
+      speak: vi.fn(),
+    });
   });
 
   afterEach(() => {
@@ -89,5 +105,40 @@ describe("MockInterview flow", () => {
       category: "technical",
     });
     expect(requestBody.answer).toMatch(/closure/i);
+  });
+
+  test("uses voice transcript as an editable answer", async () => {
+    render(
+      <MemoryRouter initialEntries={["/mock-interview/technical?count=1&difficulty=easy"]}>
+        <Routes>
+          <Route path="/mock-interview/:type" element={<MockInterview />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/what is a javascript closure\?/i)
+      ).toBeInTheDocument();
+    });
+
+    const speakButton = screen.getByRole("button", { name: /speak/i });
+    await waitFor(() => expect(speakButton).toBeEnabled());
+    await userEvent.click(speakButton);
+
+    act(() => {
+      recognitionInstances[0].onresult({
+        resultIndex: 0,
+        results: [
+          Object.assign([{ transcript: "Closures keep access to outer variables." }], {
+            isFinal: true,
+          }),
+        ],
+      });
+    });
+
+    expect(screen.getByPlaceholderText(/speak naturally/i)).toHaveValue(
+      "Closures keep access to outer variables."
+    );
   });
 });
