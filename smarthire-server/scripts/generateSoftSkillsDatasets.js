@@ -1,11 +1,22 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import {
+  extractQuestionsFromMarkdown,
+  normalizeQuestionKey,
+} from "../utils/questionExtractor.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const PROJECT_ROOT = path.resolve(__dirname, "..");
 
+const TECHNICAL_OUTPUT = path.resolve(
+  PROJECT_ROOT,
+  "topics",
+  "en",
+  "technical",
+  "generated_technical_questions.md"
+);
 const BEHAVIORAL_OUTPUT = path.resolve(
   PROJECT_ROOT,
   "topics",
@@ -21,14 +32,43 @@ const SITUATIONAL_OUTPUT = path.resolve(
   "situational_questions.md"
 );
 
-const TARGET_COUNT = 1200;
+const TARGET_COUNT = 10000;
 
-const normalizeKey = (value = "") =>
-  value
-    .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
+const normalizeKey = normalizeQuestionKey;
+
+const getMarkdownFiles = (dir, files = []) => {
+  if (!fs.existsSync(dir)) return files;
+
+  for (const item of fs.readdirSync(dir)) {
+    const fullPath = path.resolve(dir, item);
+    const stat = fs.statSync(fullPath);
+
+    if (stat.isDirectory()) {
+      getMarkdownFiles(fullPath, files);
+    } else if (item.endsWith(".md")) {
+      files.push(fullPath);
+    }
+  }
+
+  return files;
+};
+
+const countExistingTechnicalQuestions = () => {
+  const technicalDir = path.resolve(PROJECT_ROOT, "topics", "en", "technical");
+  const seen = new Set();
+
+  for (const filePath of getMarkdownFiles(technicalDir)) {
+    if (path.resolve(filePath) === TECHNICAL_OUTPUT) continue;
+
+    const content = fs.readFileSync(filePath, "utf-8");
+    for (const question of extractQuestionsFromMarkdown(content)) {
+      const key = normalizeKey(question);
+      if (key) seen.add(key);
+    }
+  }
+
+  return seen.size;
+};
 
 const pushUnique = (store, seen, question) => {
   const clean = String(question || "").trim();
@@ -211,6 +251,195 @@ const buildBehavioralQuestions = (limit = TARGET_COUNT) => {
   return questions;
 };
 
+const buildTechnicalQuestions = (limit = TARGET_COUNT) => {
+  const domains = [
+    "JavaScript closures",
+    "React component rendering",
+    "Node.js event loop behavior",
+    "REST API design",
+    "GraphQL schema design",
+    "MongoDB indexing",
+    "SQL query optimization",
+    "database transactions",
+    "authentication with JWT",
+    "authorization models",
+    "password hashing",
+    "OAuth sign-in flows",
+    "HTTP caching",
+    "browser storage",
+    "CORS configuration",
+    "rate limiting",
+    "input validation",
+    "error handling",
+    "logging and observability",
+    "unit testing",
+    "integration testing",
+    "end-to-end testing",
+    "CI/CD pipelines",
+    "Docker containers",
+    "Kubernetes deployments",
+    "cloud networking",
+    "serverless functions",
+    "message queues",
+    "event-driven architecture",
+    "microservices communication",
+    "monolith modularization",
+    "system design tradeoffs",
+    "load balancing",
+    "horizontal scaling",
+    "database sharding",
+    "replication strategies",
+    "distributed caching",
+    "Redis data structures",
+    "background jobs",
+    "file upload pipelines",
+    "image processing services",
+    "search indexing",
+    "full-text search",
+    "pagination strategies",
+    "sorting and filtering APIs",
+    "websocket communication",
+    "real-time notifications",
+    "frontend state management",
+    "form validation",
+    "accessibility in UI components",
+    "responsive layouts",
+    "CSS specificity",
+    "TypeScript type narrowing",
+    "generic types",
+    "object-oriented design",
+    "functional programming",
+    "design patterns",
+    "clean architecture",
+    "dependency injection",
+    "memory management",
+    "garbage collection",
+    "algorithm complexity",
+    "array manipulation",
+    "linked lists",
+    "trees and graphs",
+    "hash maps",
+    "dynamic programming",
+    "recursion",
+    "concurrency control",
+    "race conditions",
+    "deadlock prevention",
+    "secure coding",
+    "encryption at rest",
+    "TLS certificate handling",
+    "API versioning",
+    "backward compatibility",
+    "data migration",
+    "schema evolution",
+    "feature flags",
+    "performance profiling",
+    "memory leak detection",
+    "code review practices",
+    "technical debt management",
+    "domain modeling",
+    "data normalization",
+    "data denormalization",
+    "cache invalidation",
+    "idempotent operations",
+    "retry strategies",
+    "circuit breakers",
+    "bulk processing",
+    "stream processing",
+    "analytics pipelines",
+    "machine learning API integration",
+    "prompt safety controls",
+    "Python scripting",
+    "Java collections",
+    "C language pointers",
+    "Git branching workflows",
+    "Agile estimation",
+  ];
+
+  const tasks = [
+    "explain",
+    "debug",
+    "optimize",
+    "design",
+    "test",
+    "secure",
+    "monitor",
+    "refactor",
+    "scale",
+    "document",
+    "migrate",
+    "validate",
+    "profile",
+    "troubleshoot",
+    "compare",
+    "implement",
+  ];
+
+  const contexts = [
+    "for a high-traffic SaaS application",
+    "in a multi-tenant platform",
+    "for a mobile-first product",
+    "in a legacy codebase",
+    "during a production incident",
+    "for a security-sensitive workflow",
+    "when latency is increasing",
+    "when data volume grows quickly",
+    "for a small startup team",
+    "for an enterprise deployment",
+    "when requirements are changing frequently",
+    "while keeping backward compatibility",
+  ];
+
+  const constraints = [
+    "with limited infrastructure budget",
+    "without breaking existing users",
+    "while preserving data integrity",
+    "with strict audit requirements",
+    "while reducing operational risk",
+    "with minimal downtime",
+    "while improving developer experience",
+    "with incomplete metrics",
+    "while supporting future expansion",
+    "with clear rollback options",
+  ];
+
+  const templates = [
+    (task, domain, context, constraint) =>
+      `How would you ${task} ${domain} ${context} ${constraint}?`,
+    (task, domain, context, constraint) =>
+      `What tradeoffs would you consider when you ${task} ${domain} ${context} ${constraint}?`,
+    (task, domain, context, constraint) =>
+      `How would you verify that your approach to ${domain} works ${context} ${constraint}?`,
+    (task, domain, context, constraint) =>
+      `What common failure modes appear when teams ${task} ${domain} ${context} ${constraint}?`,
+    (task, domain, context, constraint) =>
+      `How would you explain the key design choices for ${domain} ${context} ${constraint}?`,
+    (task, domain, context, constraint) =>
+      `What metrics would you track after you ${task} ${domain} ${context} ${constraint}?`,
+    (task, domain, context, constraint) =>
+      `How would you test edge cases related to ${domain} ${context} ${constraint}?`,
+    (task, domain, context, constraint) =>
+      `What steps would you take to safely ${task} ${domain} ${context} ${constraint}?`,
+  ];
+
+  const questions = [];
+  const seen = new Set();
+
+  for (const domain of domains) {
+    for (const task of tasks) {
+      for (const context of contexts) {
+        for (const constraint of constraints) {
+          for (const template of templates) {
+            if (questions.length >= limit) return questions;
+            pushUnique(questions, seen, template(task, domain, context, constraint));
+          }
+        }
+      }
+    }
+  }
+
+  return questions;
+};
+
 const buildSituationalQuestions = (limit = TARGET_COUNT) => {
   const scenarioSubjects = [
     "a critical release is at risk because testing uncovered serious defects",
@@ -356,17 +585,26 @@ const buildSituationalQuestions = (limit = TARGET_COUNT) => {
 };
 
 const writeDataset = (outputPath, questions) => {
+  fs.mkdirSync(path.dirname(outputPath), { recursive: true });
   const content = questions.map((question) => `- ${question}`).join("\n");
   fs.writeFileSync(outputPath, `${content}\n`, "utf-8");
 };
 
+const existingTechnicalQuestionCount = countExistingTechnicalQuestions();
+const technicalQuestions = buildTechnicalQuestions(
+  Math.max(0, TARGET_COUNT - existingTechnicalQuestionCount)
+);
 const behavioralQuestions = buildBehavioralQuestions(TARGET_COUNT);
 const situationalQuestions = buildSituationalQuestions(TARGET_COUNT);
 
+writeDataset(TECHNICAL_OUTPUT, technicalQuestions);
 writeDataset(BEHAVIORAL_OUTPUT, behavioralQuestions);
 writeDataset(SITUATIONAL_OUTPUT, situationalQuestions);
 
+console.log(`Existing technical questions preserved: ${existingTechnicalQuestionCount}`);
+console.log(`Technical questions generated: ${technicalQuestions.length}`);
 console.log(`Behavioral questions generated: ${behavioralQuestions.length}`);
 console.log(`Situational questions generated: ${situationalQuestions.length}`);
+console.log(`Updated: ${TECHNICAL_OUTPUT}`);
 console.log(`Updated: ${BEHAVIORAL_OUTPUT}`);
 console.log(`Updated: ${SITUATIONAL_OUTPUT}`);

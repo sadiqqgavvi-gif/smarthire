@@ -59,5 +59,6 @@ npm run build:practice
 
 ## Environment Setup
 
-- Copy `smarthire-server/.env.example` to `smarthire-server/.env` and fill secrets.
-- Copy `SmartHire/.env.example` to `SmartHire/.env` if needed.
+- Create local `.env` files only when needed. Keep them private and do not commit them.
+- Backend env file path: `smarthire-server/.env`
+- Frontend env file path: `SmartHire/.env`

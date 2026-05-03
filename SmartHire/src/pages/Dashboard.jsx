@@ -45,7 +45,7 @@ const buildCategoryScores = (sessions = []) => {
   }));
 };
 
-const StatCard = ({ icon: Icon, title, value, description }) => (
+const StatCard = ({ icon, title, value, description }) => (
   <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
     <div className="flex items-center justify-between gap-3">
       <div>
@@ -53,7 +53,7 @@ const StatCard = ({ icon: Icon, title, value, description }) => (
         <div className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">{value}</div>
       </div>
       <div className="rounded-xl bg-slate-100 p-3 text-slate-700">
-        <Icon className="h-5 w-5" />
+        {React.createElement(icon, { className: "h-5 w-5" })}
       </div>
     </div>
     {description ? <p className="mt-4 text-sm text-slate-500">{description}</p> : null}

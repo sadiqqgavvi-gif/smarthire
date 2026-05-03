@@ -10,7 +10,7 @@ import aiRoutes from "./routes/aiRoutes.js";
 import practiceRoutes from "./routes/practiceRoutes.js";
 import mockRoutes from "./routes/mockRoutes.js";
 import { notFound, errorHandler } from "./utils/errorHandler.js";
-import { apiLimiter, authLimiter, aiLimiter } from "./middleware/rateLimitMiddleware.js";
+import { apiLimiter, aiLimiter } from "./middleware/rateLimitMiddleware.js";
 import {
   attachRequestContext,
   logHttpRequest,
@@ -100,7 +100,7 @@ app.get("/health/ready", (_req, res) => {
 
 app.use("/api/mock", mockRoutes);
 app.use("/api/practice", practiceRoutes);
-app.use("/api/auth", authLimiter, authRoutes);
+app.use("/api/auth", authRoutes);
 app.use("/api/contact", contactRoutes);
 app.use("/api/ai", aiLimiter, aiRoutes);
 app.use("/api/questions", questionRoutes);

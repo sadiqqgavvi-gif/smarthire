@@ -11,6 +11,11 @@ const AUTH_PATHS_TO_SKIP_REFRESH = new Set([
   "/api/auth/logout",
 ]);
 
+const AUTH_ERROR_CODES_TO_SKIP_REFRESH = new Set([
+  "AUTH_TOKEN_MISSING",
+  "REFRESH_TOKEN_MISSING",
+]);
+
 const getPathname = (url) => {
   try {
     return new URL(url, window.location.origin).pathname;
@@ -23,6 +28,15 @@ const shouldAttemptRefresh = (url, attemptRefresh) => {
   if (!attemptRefresh) return false;
   if (Date.now() - lastRefreshFailureAt < REFRESH_RETRY_COOLDOWN_MS) return false;
   return !AUTH_PATHS_TO_SKIP_REFRESH.has(getPathname(url));
+};
+
+const getAuthErrorCode = async (response) => {
+  try {
+    const body = await response.clone().json();
+    return body?.error?.code || body?.code || "";
+  } catch {
+    return "";
+  }
 };
 
 const refreshSession = async () => {
@@ -54,6 +68,11 @@ export const authFetch = async (url, options = {}, attemptRefresh = true) => {
   });
 
   if (response.status !== 401 || !shouldAttemptRefresh(url, attemptRefresh)) {
+    return response;
+  }
+
+  const authErrorCode = await getAuthErrorCode(response);
+  if (AUTH_ERROR_CODES_TO_SKIP_REFRESH.has(authErrorCode)) {
     return response;
   }
 

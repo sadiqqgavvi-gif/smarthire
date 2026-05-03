@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import User from "../models/User.js";
 import protect from "../middleware/authMiddleware.js";
+import { authLimiter } from "../middleware/rateLimitMiddleware.js";
 import { validateAuthPayload } from "../middleware/validationMiddleware.js";
 import { sendError, sendSuccess } from "../utils/apiResponse.js";
 
@@ -123,7 +124,7 @@ const resolveLogoutUserId = async (req) => {
   }
 };
 
-router.post("/register", validateAuthPayload, async (req, res) => {
+router.post("/register", authLimiter, validateAuthPayload, async (req, res) => {
   try {
     const { email, password } = req.body;
     const normalizedEmail = email.trim().toLowerCase();
@@ -160,7 +161,7 @@ router.post("/register", validateAuthPayload, async (req, res) => {
   }
 });
 
-router.post("/login", validateAuthPayload, async (req, res) => {
+router.post("/login", authLimiter, validateAuthPayload, async (req, res) => {
   try {
     const { email, password } = req.body;
     const normalizedEmail = email.trim().toLowerCase();
@@ -206,7 +207,7 @@ router.post("/login", validateAuthPayload, async (req, res) => {
   }
 });
 
-router.post("/google", async (req, res) => {
+router.post("/google", authLimiter, async (req, res) => {
   try {
     const credential = req.body?.credential || req.body?.idToken;
     const googleClientId = process.env.GOOGLE_CLIENT_ID;
