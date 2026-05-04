@@ -11,6 +11,7 @@ import practiceRoutes from "./routes/practiceRoutes.js";
 import mockRoutes from "./routes/mockRoutes.js";
 import { notFound, errorHandler } from "./utils/errorHandler.js";
 import { apiLimiter, aiLimiter } from "./middleware/rateLimitMiddleware.js";
+import { ensureDatabaseConnection } from "./utils/database.js";
 import {
   attachRequestContext,
   logHttpRequest,
@@ -97,6 +98,10 @@ app.get("/health/ready", (_req, res) => {
     timestamp: new Date().toISOString(),
   });
 });
+
+if (process.env.VERCEL || process.env.NODE_ENV === "production") {
+  app.use("/api", ensureDatabaseConnection);
+}
 
 app.use("/api/mock", mockRoutes);
 app.use("/api/practice", practiceRoutes);

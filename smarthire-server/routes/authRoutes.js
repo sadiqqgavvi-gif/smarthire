@@ -26,11 +26,12 @@ const hashToken = (token) =>
   crypto.createHash("sha256").update(token).digest("hex");
 
 const isProd = process.env.NODE_ENV === "production";
+const cookieSameSite = isProd ? "none" : "lax";
 
 const accessCookieOptions = {
   httpOnly: true,
   secure: isProd,
-  sameSite: "lax",
+  sameSite: cookieSameSite,
   maxAge: 15 * 60 * 1000,
   path: "/",
 };
@@ -38,7 +39,7 @@ const accessCookieOptions = {
 const refreshCookieOptions = {
   httpOnly: true,
   secure: isProd,
-  sameSite: "lax",
+  sameSite: cookieSameSite,
   maxAge: 7 * 24 * 60 * 60 * 1000,
   path: "/",
 };
