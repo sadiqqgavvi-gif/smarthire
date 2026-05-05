@@ -14,6 +14,7 @@ import {
   Clock3,
   ChartColumnIncreasing,
   Mic,
+  BookOpenCheck,
   ArrowLeft,
   LogOut,
   Sparkles,
@@ -109,41 +110,72 @@ export default function Dashboard() {
     [sessions]
   );
 
-  const mockStats = useMemo(() => {
-    const totalMockSessions = mockSessions.length;
-    const averageMockScore = totalMockSessions
+  const practiceSessions = useMemo(
+    () => sessions.filter((session) => session?.mode === "practice"),
+    [sessions]
+  );
+
+  const buildSessionStats = (sessionList) => {
+    const totalSessions = sessionList.length;
+    const averageScore = totalSessions
       ? Math.round(
-          mockSessions.reduce(
-            (sum, session) => sum + (Number(session?.averageScore) || 0),
-            0
-          ) / totalMockSessions
+          sessionList.reduce((sum, session) => sum + (Number(session?.averageScore) || 0), 0) /
+            totalSessions
         )
       : 0;
-    const totalAttempts = mockSessions.reduce(
+    const totalAttempts = sessionList.reduce(
       (sum, session) => sum + (Number(session?.attemptedCount) || 0),
       0
     );
 
     return {
-      totalMockSessions,
-      averageMockScore,
+      totalSessions,
+      averageScore,
       totalAttempts,
     };
+  };
+
+  const mockStats = useMemo(() => {
+    const summary = buildSessionStats(mockSessions);
+    return {
+      totalMockSessions: summary.totalSessions,
+      averageMockScore: summary.averageScore,
+      totalAttempts: summary.totalAttempts,
+    };
   }, [mockSessions]);
+
+  const practiceStats = useMemo(() => buildSessionStats(practiceSessions), [practiceSessions]);
 
   const performanceData = useMemo(() => {
     if (activeView === "mock") {
       return buildCategoryScores(mockSessions);
     }
+    if (activeView === "practice") {
+      return buildCategoryScores(practiceSessions);
+    }
     return buildCategoryScores(sessions);
-  }, [activeView, mockSessions, sessions]);
+  }, [activeView, mockSessions, practiceSessions, sessions]);
 
-  const chartTitle =
-    activeView === "mock" ? "Mock interview performance" : "Overall skill performance";
-  const chartSubtitle =
-    activeView === "mock"
-      ? "Average score by interview category for saved mock sessions."
-      : "Average score by category across all saved sessions.";
+  const chartCopy = {
+    mock: {
+      title: "Mock interview performance",
+      subtitle: "Average score by interview category for saved mock sessions.",
+    },
+    practice: {
+      title: "Practice performance",
+      subtitle: "Average score by practice category for saved practice sessions.",
+    },
+    overview: {
+      title: "Overall skill performance",
+      subtitle: "Average score by category across all saved sessions.",
+    },
+  }[activeView];
+
+  const viewStatusText = {
+    mock: "Showing saved mock interview results only.",
+    practice: "Showing saved practice results only.",
+    overview: "Showing all saved practice and mock sessions.",
+  }[activeView];
 
   const handleLogout = async () => {
     await logoutUser();
@@ -163,8 +195,8 @@ export default function Dashboard() {
               Dashboard
             </h1>
             <p className="mt-2 max-w-2xl text-sm text-slate-500">
-              Review your practice activity and switch to mock interview performance for a more focused
-              view of readiness.
+              Review your practice activity and switch between practice and mock interview
+              performance for a more focused view of readiness.
             </p>
           </div>
 
@@ -212,46 +244,61 @@ export default function Dashboard() {
               <Mic className="h-4 w-4" />
               Mock interview performance
             </button>
+            <button
+              onClick={() => setActiveView("practice")}
+              className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition ${
+                activeView === "practice"
+                  ? "bg-slate-900 text-white"
+                  : "text-slate-600 hover:bg-slate-100"
+              }`}
+            >
+              <BookOpenCheck className="h-4 w-4" />
+              Practice performance
+            </button>
           </div>
 
-          <p className="text-sm text-slate-500">
-            {activeView === "mock"
-              ? "Showing saved mock interview results only."
-              : "Showing all saved practice and mock sessions."}
-          </p>
+          <p className="text-sm text-slate-500">{viewStatusText}</p>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-          <StatCard
-            icon={TrendingUp}
-            title="Overall score"
-            value={scoreToPercent(stats.overallScore)}
-            description="Combined average across all saved sessions."
-          />
-          <StatCard
-            icon={Clock3}
-            title="Total sessions"
-            value={stats.totalSessions}
-            description="Practice and mock sessions recorded in the dashboard."
-          />
-          <StatCard
-            icon={CheckCircle}
-            title="Mock interviews"
-            value={stats.completedInterviews}
-            description="Completed mock sessions available for review."
-          />
-        </div>
+        {activeView === "overview" ? (
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+            <StatCard
+              icon={TrendingUp}
+              title="Overall score"
+              value={scoreToPercent(stats.overallScore)}
+              description="Combined average across all saved sessions."
+            />
+            <StatCard
+              icon={Clock3}
+              title="Total sessions"
+              value={stats.totalSessions}
+              description="Practice and mock sessions recorded in the dashboard."
+            />
+            <StatCard
+              icon={CheckCircle}
+              title="Mock interviews"
+              value={stats.completedInterviews}
+              description="Completed mock sessions available for review."
+            />
+          </div>
+        ) : null}
 
         <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:col-span-2">
             <div className="mb-5 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <h2 className="text-xl font-semibold tracking-tight text-slate-900">{chartTitle}</h2>
-                <p className="text-sm text-slate-500">{chartSubtitle}</p>
+                <h2 className="text-xl font-semibold tracking-tight text-slate-900">
+                  {chartCopy.title}
+                </h2>
+                <p className="text-sm text-slate-500">{chartCopy.subtitle}</p>
               </div>
               {activeView === "mock" ? (
                 <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
                   {mockStats.totalMockSessions} mock sessions
+                </div>
+              ) : activeView === "practice" ? (
+                <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
+                  {practiceStats.totalSessions} practice sessions
                 </div>
               ) : null}
             </div>
@@ -288,11 +335,17 @@ export default function Dashboard() {
 
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <h2 className="text-lg font-semibold tracking-tight text-slate-900">
-              {activeView === "mock" ? "Mock interview summary" : "Performance summary"}
+              {activeView === "mock"
+                ? "Mock interview summary"
+                : activeView === "practice"
+                  ? "Practice summary"
+                  : "Performance summary"}
             </h2>
             <p className="mt-1 text-sm text-slate-500">
               {activeView === "mock"
                 ? "A focused snapshot of your mock interview progress."
+                : activeView === "practice"
+                  ? "A focused snapshot of your practice progress."
                 : "A quick snapshot of your overall interview activity."}
             </p>
 
@@ -314,6 +367,27 @@ export default function Dashboard() {
                   <p className="text-sm text-slate-500">Attempted answers</p>
                   <p className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">
                     {mockStats.totalAttempts}
+                  </p>
+                </div>
+              </div>
+            ) : activeView === "practice" ? (
+              <div className="mt-6 space-y-4">
+                <div className="rounded-2xl bg-slate-50 p-4">
+                  <p className="text-sm text-slate-500">Average practice score</p>
+                  <p className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">
+                    {scoreToPercent(practiceStats.averageScore)}
+                  </p>
+                </div>
+                <div className="rounded-2xl bg-slate-50 p-4">
+                  <p className="text-sm text-slate-500">Practice sessions completed</p>
+                  <p className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">
+                    {practiceStats.totalSessions}
+                  </p>
+                </div>
+                <div className="rounded-2xl bg-slate-50 p-4">
+                  <p className="text-sm text-slate-500">Attempted answers</p>
+                  <p className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">
+                    {practiceStats.totalAttempts}
                   </p>
                 </div>
               </div>
@@ -341,50 +415,6 @@ export default function Dashboard() {
             )}
           </div>
         </div>
-
-        {activeView === "mock" ? (
-          <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <div>
-                <h2 className="text-lg font-semibold tracking-tight text-slate-900">Recent mock sessions</h2>
-                <p className="text-sm text-slate-500">Latest saved mock interview attempts.</p>
-              </div>
-            </div>
-
-            {mockSessions.length ? (
-              <div className="overflow-hidden rounded-xl border border-slate-200">
-                <table className="w-full divide-y divide-slate-200">
-                  <thead className="bg-slate-50">
-                    <tr className="text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                      <th className="px-4 py-3">Category</th>
-                      <th className="px-4 py-3">Difficulty</th>
-                      <th className="px-4 py-3">Questions</th>
-                      <th className="px-4 py-3">Attempted</th>
-                      <th className="px-4 py-3">Average score</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-200 bg-white">
-                    {mockSessions.slice(0, 5).map((session) => (
-                      <tr key={session?._id} className="text-sm text-slate-700">
-                        <td className="px-4 py-3 font-medium text-slate-900">
-                          {formatLabel(session?.category)}
-                        </td>
-                        <td className="px-4 py-3">{formatLabel(session?.difficulty || "mixed")}</td>
-                        <td className="px-4 py-3">{session?.questionCount || 0}</td>
-                        <td className="px-4 py-3">{session?.attemptedCount || 0}</td>
-                        <td className="px-4 py-3">{scoreToPercent(session?.averageScore || 0)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-6 py-10 text-center text-sm text-slate-500">
-                No mock interview sessions have been saved yet.
-              </div>
-            )}
-          </section>
-        ) : null}
       </main>
     </div>
   );

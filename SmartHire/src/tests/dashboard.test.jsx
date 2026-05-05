@@ -89,8 +89,38 @@ describe("Dashboard", () => {
 
     await waitFor(() => {
       expect(screen.getByText(/mock interview summary/i)).toBeInTheDocument();
-      expect(screen.getByText(/technical/i)).toBeInTheDocument();
+      expect(screen.getByText(/1 mock sessions/i)).toBeInTheDocument();
       expect(screen.getByText(/average mock score/i)).toBeInTheDocument();
     });
+
+    expect(screen.queryByText(/combined average across all saved sessions/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/recent mock sessions/i)).not.toBeInTheDocument();
+  });
+
+  test("shows a practice performance view", async () => {
+    render(
+      <MemoryRouter initialEntries={["/dashboard"]}>
+        <Routes>
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/login" element={<div>Login page</div>} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /dashboard/i })).toBeInTheDocument();
+    });
+
+    expect(screen.getByRole("button", { name: /practice performance/i })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: /practice performance/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/practice summary/i)).toBeInTheDocument();
+      expect(screen.getByText(/1 practice sessions/i)).toBeInTheDocument();
+      expect(screen.getByText(/average practice score/i)).toBeInTheDocument();
+    });
+
+    expect(screen.queryByText(/practice and mock sessions recorded in the dashboard/i)).not.toBeInTheDocument();
   });
 });

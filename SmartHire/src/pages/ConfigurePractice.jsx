@@ -2,7 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 
 const difficulties = ["Easy", "Medium", "Hard"];
-const questionCounts = [1, 3, 5, 10];
+const questionCounts = [5, 10, 15, 20];
 
 export default function ConfigurePractice() {
   const { type } = useParams();
@@ -12,12 +12,12 @@ export default function ConfigurePractice() {
     decodeURIComponent(type).toLowerCase() === "behavioral";
 
   const [difficulty, setDifficulty] = useState("Medium");
-  const [count, setCount] = useState(3);
+  const [count, setCount] = useState(5);
   const [mode, setMode] = useState("practice"); // NEW
   const [role] = useState("");
 
   useEffect(() => {
-    setCount(mode === "mock" ? 10 : 3);
+    setCount(mode === "mock" ? 10 : 5);
   }, [mode]);
 
   const startPractice = () => {

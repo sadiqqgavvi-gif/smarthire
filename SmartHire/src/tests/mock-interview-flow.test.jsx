@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import MockInterview from "../pages/MockInterview";
+import { authFetch } from "../utils/authFetch";
 
 vi.mock("../utils/authFetch", () => ({
   authFetch: vi.fn().mockResolvedValue({ ok: true }),
@@ -93,6 +94,7 @@ describe("MockInterview flow", () => {
       expect(screen.getByText(/ai feedback/i)).toBeInTheDocument();
       expect(screen.getByText(/score:/i)).toBeInTheDocument();
       expect(screen.getByText(/clear explanation/i)).toBeInTheDocument();
+      expect(screen.getByText(/final question evaluated/i)).toBeInTheDocument();
     });
 
     expect(fetchMock).toHaveBeenCalledTimes(2);
@@ -105,6 +107,52 @@ describe("MockInterview flow", () => {
       category: "technical",
     });
     expect(requestBody.answer).toMatch(/closure/i);
+  });
+
+  test("lets the user manually save or retry after the final evaluation", async () => {
+    render(
+      <MemoryRouter initialEntries={["/mock-interview/technical?count=1&difficulty=easy"]}>
+        <Routes>
+          <Route path="/mock-interview/:type" element={<MockInterview />} />
+          <Route path="/dashboard" element={<div>Dashboard page</div>} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(/what is a javascript closure\?/i)).toBeInTheDocument();
+    });
+
+    await userEvent.type(
+      screen.getByPlaceholderText(/speak naturally/i),
+      "A closure keeps access to values from its outer lexical scope."
+    );
+    await userEvent.click(screen.getByRole("button", { name: /submit answer/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /save to dashboard/i })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /retry mock interview/i })).toBeInTheDocument();
+      expect(screen.getAllByRole("button", { name: /^back$/i }).length).toBeGreaterThan(0);
+    });
+
+    expect(authFetch).not.toHaveBeenCalled();
+
+    await userEvent.click(screen.getByRole("button", { name: /save to dashboard/i }));
+
+    await waitFor(() => {
+      expect(authFetch).toHaveBeenCalledTimes(1);
+      expect(screen.getByText(/mock interview saved to your dashboard/i)).toBeInTheDocument();
+    });
+
+    const [, saveOptions] = authFetch.mock.calls[0];
+    expect(JSON.parse(saveOptions.body)).toMatchObject({
+      mode: "mock",
+      category: "technical",
+      difficulty: "easy",
+      questionCount: 1,
+      attemptedCount: 1,
+      averageScore: 8,
+    });
   });
 
   test("uses voice transcript as an editable answer", async () => {

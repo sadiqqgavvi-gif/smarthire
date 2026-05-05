@@ -1,12 +1,23 @@
 import { useEffect, useRef, useState } from "react";
-import { useSearchParams, useParams } from "react-router-dom";
-import { Mic, MicOff, Volume2, VolumeX } from "lucide-react";
+import { useSearchParams, useParams, useNavigate, useLocation } from "react-router-dom";
+import {
+  ArrowLeft,
+  BarChart3,
+  Mic,
+  MicOff,
+  RotateCcw,
+  Save,
+  Volume2,
+  VolumeX,
+} from "lucide-react";
 import { authFetch } from "../utils/authFetch";
 import { API_BASE_URL } from "../utils/apiBaseUrl";
 
 export default function MockInterview() {
   const { type } = useParams();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const count = searchParams.get("count") || 10;
   const difficulty = searchParams.get("difficulty")?.toLowerCase() || "medium";
@@ -19,6 +30,8 @@ export default function MockInterview() {
   const [evaluating, setEvaluating] = useState(false);
   const [scores, setScores] = useState([]);
   const [sessionSaved, setSessionSaved] = useState(false);
+  const [savingSession, setSavingSession] = useState(false);
+  const [saveMessage, setSaveMessage] = useState("");
   const [voiceSupported, setVoiceSupported] = useState(false);
   const [listening, setListening] = useState(false);
   const [interimTranscript, setInterimTranscript] = useState("");
@@ -169,40 +182,49 @@ export default function MockInterview() {
     }
   };
 
-  useEffect(() => {
-    const saveSession = async () => {
-      if (sessionSaved || current < questions.length) return;
+  const saveSession = async () => {
+    if (sessionSaved || savingSession) return;
 
-      const averageScore = scores.length
-        ? Number((scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(2))
-        : 0;
+    const averageScore = scores.length
+      ? Number((scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(2))
+      : 0;
 
-      try {
-        const res = await authFetch(`${API_BASE_URL}/api/practice/sessions`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            mode: "mock",
-            category: String(type).toLowerCase(),
-            difficulty: difficulty || "mixed",
-            questionCount: Number(count) || questions.length,
-            attemptedCount: scores.length,
-            averageScore,
-          }),
-        });
+    setSavingSession(true);
+    setSaveMessage("");
 
-        if (res.ok) {
-          setSessionSaved(true);
+    try {
+      const res = await authFetch(`${API_BASE_URL}/api/practice/sessions`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          mode: "mock",
+          category: String(type).toLowerCase(),
+          difficulty: difficulty || "mixed",
+          questionCount: Number(count) || questions.length,
+          attemptedCount: scores.length,
+          averageScore,
+        }),
+      });
+
+      if (!res.ok) {
+        if (res.status === 401) {
+          navigate("/login", { state: { from: location }, replace: true });
+          return;
         }
-      } catch (err) {
-        console.error("Failed to save mock session", err);
+        throw new Error("Unable to save this mock interview.");
       }
-    };
 
-    saveSession();
-  }, [count, current, difficulty, questions.length, scores, sessionSaved, type]);
+      setSessionSaved(true);
+      setSaveMessage("Mock interview saved to your dashboard.");
+    } catch (err) {
+      console.error("Failed to save mock session", err);
+      setSaveMessage(err.message || "Unable to save this mock interview.");
+    } finally {
+      setSavingSession(false);
+    }
+  };
 
   const nextQuestion = () => {
     stopListening();
@@ -212,6 +234,20 @@ export default function MockInterview() {
     setInterimTranscript("");
     setVoiceMessage("");
     setCurrent((prev) => prev + 1);
+  };
+
+  const retryInterview = () => {
+    stopListening();
+    stopSpeaking();
+    setCurrent(0);
+    setAnswer("");
+    setFeedback(null);
+    setScores([]);
+    setSessionSaved(false);
+    setSavingSession(false);
+    setSaveMessage("");
+    setInterimTranscript("");
+    setVoiceMessage("");
   };
 
   const startListening = () => {
@@ -273,13 +309,82 @@ export default function MockInterview() {
 
   if (!questions.length) return <p className="p-10">No questions found.</p>;
 
-  if (current >= questions.length)
+  const isFinalQuestion = current === questions.length - 1;
+  const averageScore = scores.length
+    ? Number((scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(1))
+    : 0;
+
+  if (current >= questions.length) {
     return (
-      <div className="p-10 text-center">
-        <h2 className="text-2xl font-bold mb-4">Interview Completed 🎉</h2>
-        <p>Great job practicing!</p>
+      <div className="min-h-screen bg-gray-50 px-4 py-12">
+        <div className="mx-auto max-w-3xl rounded-2xl bg-white p-8 text-center shadow">
+          <p className="text-sm font-medium uppercase tracking-wide text-slate-500">
+            Mock interview complete
+          </p>
+          <h2 className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">
+            Review your results
+          </h2>
+          <p className="mx-auto mt-3 max-w-2xl text-sm text-slate-600">
+            You answered {scores.length} of {questions.length} questions. Save this attempt to your
+            dashboard, or retry the mock interview to improve your responses.
+          </p>
+
+          <div className="mt-8 grid gap-4 sm:grid-cols-3">
+            <div className="rounded-2xl bg-slate-50 p-4">
+              <p className="text-sm text-slate-500">Average score</p>
+              <p className="mt-2 text-3xl font-semibold text-slate-900">{averageScore}/10</p>
+            </div>
+            <div className="rounded-2xl bg-slate-50 p-4">
+              <p className="text-sm text-slate-500">Questions</p>
+              <p className="mt-2 text-3xl font-semibold text-slate-900">{questions.length}</p>
+            </div>
+            <div className="rounded-2xl bg-slate-50 p-4">
+              <p className="text-sm text-slate-500">Attempted</p>
+              <p className="mt-2 text-3xl font-semibold text-slate-900">{scores.length}</p>
+            </div>
+          </div>
+
+          <div className="mt-8 flex flex-wrap justify-center gap-3">
+            <button
+              type="button"
+              onClick={saveSession}
+              disabled={savingSession || sessionSaved || scores.length === 0}
+              className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-medium text-white disabled:cursor-not-allowed disabled:bg-slate-300"
+            >
+              <Save className="h-4 w-4" />
+              {sessionSaved ? "Saved to dashboard" : savingSession ? "Saving..." : "Save to dashboard"}
+            </button>
+            <button
+              type="button"
+              onClick={retryInterview}
+              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            >
+              <RotateCcw className="h-4 w-4" />
+              Retry mock interview
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate("/dashboard")}
+              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            >
+              <BarChart3 className="h-4 w-4" />
+              View dashboard
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate(-1)}
+              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back
+            </button>
+          </div>
+
+          {saveMessage ? <p className="mt-4 text-sm text-slate-600">{saveMessage}</p> : null}
+        </div>
       </div>
     );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4">
@@ -373,12 +478,57 @@ export default function MockInterview() {
               </ul>
             </div>
 
-            <button
-              onClick={nextQuestion}
-              className="bg-green-600 text-white px-6 py-2 rounded-xl"
-            >
-              Next Question
-            </button>
+            {isFinalQuestion ? (
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <h3 className="font-semibold text-slate-900">Final question evaluated</h3>
+                <p className="mt-1 text-sm text-slate-600">
+                  Your mock interview is ready to finish. Save this attempt to the dashboard,
+                  retry the interview, or review your overall summary.
+                </p>
+                <div className="mt-4 flex flex-wrap gap-3">
+                  <button
+                    type="button"
+                    onClick={saveSession}
+                    disabled={savingSession || sessionSaved || scores.length === 0}
+                    className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-medium text-white disabled:cursor-not-allowed disabled:bg-slate-300"
+                  >
+                    <Save className="h-4 w-4" />
+                    {sessionSaved ? "Saved to dashboard" : savingSession ? "Saving..." : "Save to dashboard"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={retryInterview}
+                    className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                    Retry mock interview
+                  </button>
+                  <button
+                    type="button"
+                    onClick={nextQuestion}
+                    className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                  >
+                    Review summary
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => navigate(-1)}
+                    className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    Back
+                  </button>
+                </div>
+                {saveMessage ? <p className="mt-3 text-sm text-slate-600">{saveMessage}</p> : null}
+              </div>
+            ) : (
+              <button
+                onClick={nextQuestion}
+                className="bg-green-600 text-white px-6 py-2 rounded-xl"
+              >
+                Next Question
+              </button>
+            )}
           </>
         )}
       </div>
