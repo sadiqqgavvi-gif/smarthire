@@ -11,7 +11,7 @@ import practiceRoutes from "./routes/practiceRoutes.js";
 import mockRoutes from "./routes/mockRoutes.js";
 import { notFound, errorHandler } from "./utils/errorHandler.js";
 import { apiLimiter, aiLimiter } from "./middleware/rateLimitMiddleware.js";
-import { ensureDatabaseConnection } from "./utils/database.js";
+import { connectDatabase, ensureDatabaseConnection } from "./utils/database.js";
 import {
   attachRequestContext,
   logHttpRequest,
@@ -71,8 +71,17 @@ app.get("/health/live", (_req, res) => {
   });
 });
 
-app.get("/health/ready", (_req, res) => {
+app.get("/health/ready", async (_req, res) => {
   const requestId = res.locals?.requestId;
+
+  if (process.env.VERCEL || process.env.NODE_ENV === "production") {
+    try {
+      await connectDatabase();
+    } catch (error) {
+      console.error("MongoDB readiness check failed:", error);
+    }
+  }
+
   const dbReady = mongoose.connection.readyState === 1;
 
   if (!dbReady) {

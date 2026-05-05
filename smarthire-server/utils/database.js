@@ -30,7 +30,8 @@ export const ensureDatabaseConnection = async (_req, res, next) => {
   try {
     await connectDatabase();
     next();
-  } catch {
+  } catch (error) {
+    console.error("MongoDB connection failed:", error);
     res.status(503).json({
       success: false,
       message: "Database connection is not available",
