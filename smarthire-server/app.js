@@ -23,18 +23,22 @@ const app = express();
 
 app.set("trust proxy", 1);
 
+const normalizeOrigin = (origin = "") => origin.trim().replace(/\/+$/, "");
+
 const allowedOrigins = (
   process.env.CLIENT_ORIGINS ||
   "http://localhost:5173,http://localhost:5174,http://127.0.0.1:5173,http://127.0.0.1:5174"
 )
   .split(",")
-  .map((origin) => origin.trim())
+  .map(normalizeOrigin)
   .filter(Boolean);
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+      if (!origin || allowedOrigins.includes(normalizeOrigin(origin))) {
+        return callback(null, true);
+      }
       return callback(new Error(`Blocked by CORS: ${origin}`));
     },
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
