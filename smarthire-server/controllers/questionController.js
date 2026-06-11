@@ -1,5 +1,6 @@
 import Question from "../models/questionModel.js";
 import { sendError, sendSuccess } from "../utils/apiResponse.js";
+import { getBundledQuestions } from "../utils/questionBank.js";
 
 const buildUniqueQuestionPipeline = (filter, size, excludedQuestions = []) => {
   const pipeline = [
@@ -77,6 +78,19 @@ export const getQuestions = async (req, res) => {
         buildUniqueQuestionPipeline(baseFilter, remaining, seen)
       );
       questions = [...questions, ...extraQuestions];
+    }
+
+    if (questions.length < count) {
+      const remaining = count - questions.length;
+      const seen = questions.map((q) => q.question.trim().toLowerCase());
+      const bundledQuestions = getBundledQuestions({
+        category,
+        difficulty,
+        role,
+        count: remaining,
+        excludeQuestions: seen,
+      });
+      questions = [...questions, ...bundledQuestions];
     }
 
     console.log(`Returned ${questions.length} questions`);

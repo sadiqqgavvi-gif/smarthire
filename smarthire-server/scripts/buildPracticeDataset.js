@@ -1,50 +1,23 @@
 import fs from "fs";
 import path from "path";
+import { fileURLToPath } from "url";
 import mongoose from "mongoose";
 import Question from "../models/questionModel.js";
 import {
   extractQuestionsFromMarkdown,
   normalizeQuestionKey,
 } from "../utils/questionExtractor.js";
+import { assignDifficulty } from "../utils/questionBank.js";
 
-const BASE_PATH = path.resolve(process.cwd(), "topics/en");
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const BASE_PATH = path.resolve(__dirname, "../topics/en");
 const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/smarthire";
 
 const getCategory = (filePath) => {
   if (filePath.includes(`${path.sep}behavioral${path.sep}`)) return "behavioral";
   if (filePath.includes(`${path.sep}situational${path.sep}`)) return "situational";
   return "technical";
-};
-
-const assignDifficulty = (text) => {
-  const words = text.trim().split(/\s+/).length;
-
-  const hardKeywords = [
-    "architecture",
-    "scalability",
-    "optimize",
-    "design",
-    "complex",
-    "performance",
-    "distributed",
-    "security",
-    "microservices",
-    "algorithm",
-  ];
-
-  const easyKeywords = ["what is", "define", "list", "name", "basic", "simple"];
-
-  const lower = text.toLowerCase();
-
-  if (hardKeywords.some((keyword) => lower.includes(keyword)) || words > 30) {
-    return "hard";
-  }
-
-  if (easyKeywords.some((keyword) => lower.startsWith(keyword)) || words < 12) {
-    return "easy";
-  }
-
-  return "medium";
 };
 
 const getAllMarkdownFiles = (dir, fileSet = new Set()) => {

@@ -4,6 +4,7 @@ import protect from "../middleware/authMiddleware.js";
 import PracticeSession from "../models/PracticeSession.js";
 import { validatePracticeSessionPayload } from "../middleware/validationMiddleware.js";
 import { sendError, sendSuccess } from "../utils/apiResponse.js";
+import { getBundledQuestions } from "../utils/questionBank.js";
 
 const router = express.Router();
 
@@ -151,6 +152,18 @@ router.get("/:type", async (req, res) => {
         buildUniqueQuestionPipeline(baseFilter, remaining, seen)
       );
       questions = [...questions, ...extraQuestions];
+    }
+
+    if (questions.length < count) {
+      const remaining = count - questions.length;
+      const seen = questions.map((q) => q.question.trim().toLowerCase());
+      const bundledQuestions = getBundledQuestions({
+        category: normalizedType,
+        difficulty,
+        count: remaining,
+        excludeQuestions: seen,
+      });
+      questions = [...questions, ...bundledQuestions];
     }
 
     return sendSuccess(res, { questions });
