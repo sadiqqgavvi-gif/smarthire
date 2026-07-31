@@ -151,43 +151,6 @@ cd smarthire-server
 npm install
 ```
 
-Create `smarthire-server/.env`:
-
-```env
-# Server
-NODE_ENV=development
-PORT=5000
-CLIENT_ORIGINS=http://localhost:5173,http://localhost:5174
-
-# Database
-MONGO_URI=mongodb://localhost:27017/smarthire
-MONGO_CONNECT_TIMEOUT_MS=10000
-
-# Auth
-JWT_SECRET=replace_with_a_long_random_string
-ACCESS_TOKEN_SECRET=replace_with_a_long_random_string
-REFRESH_TOKEN_SECRET=replace_with_a_long_random_string
-GOOGLE_CLIENT_ID=your-google-oauth-client-id.apps.googleusercontent.com
-
-# AI evaluation (all optional — the app works without any of these)
-USE_AI=false
-OPENAI_API_KEY=your_key_here
-OPENAI_EVALUATION_MODEL=gpt-4o-mini
-USE_PYTHON_EVALUATOR=true
-PYTHON_BIN=python3
-PYTHON_EVALUATOR_TIMEOUT_MS=12000
-
-# Rate limiting (defaults shown)
-RATE_LIMIT_WINDOW_MS=900000
-RATE_LIMIT_MAX=250
-AUTH_RATE_LIMIT_MAX=40
-AI_RATE_LIMIT_MAX=20
-MOCK_EVAL_RATE_LIMIT_MAX=25
-
-# Logging
-LOG_HTTP_REQUESTS=true
-```
-
 > On Windows, set `PYTHON_BIN=python` instead of `python3` if that's how your interpreter is aliased.
 
 Run it:
@@ -203,13 +166,6 @@ cd SmartHire
 npm install
 ```
 
-Create `SmartHire/.env`:
-
-```env
-VITE_API_URL=http://localhost:5000
-VITE_GOOGLE_CLIENT_ID=your-google-oauth-client-id.apps.googleusercontent.com
-```
-
 Run it:
 
 ```bash
@@ -217,8 +173,6 @@ npm run dev
 ```
 
 The app will be available at `http://localhost:5173`.
-
-> Keep `.env` files private and out of version control — both are already covered by `.gitignore`.
 
 ### Rebuild the question dataset (optional)
 
@@ -299,14 +253,11 @@ Two supported paths:
 
 ## About This Project
 
-SmartHire began as a Final Year Project (BS Software Engineering) by **Gavriel Sadiq** and **Faizan Habib**, supervised by Ms. Iram Rubab, Department of Software Engineering, PMAS-Arid Agriculture University Rawalpindi. Additional FYP documentation — UML diagrams and an interview guide — is included in the repo root.
+SmartHire began as a Final Year Project (BS Software Engineering) by **Gavriel Sadiq**, supervised by Ms. Iram Rubab, Department of Software Engineering, PMAS-Arid Agriculture University Rawalpindi. Additional FYP documentation — UML diagrams and an interview guide — is included in the repo root.
 
 ## Live Demo
 
-<!-- Once deployed, replace this line with your live URL, e.g.: -->
-<!-- 🔗 [Try it live](https://your-deployed-app.vercel.app) -->
-
-_Live demo coming soon._
+🔗 [Try it live](https://smarrthire.netlify.app/)
 
 ## License
 
