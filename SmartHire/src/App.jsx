@@ -1,4 +1,4 @@
-import { Routes, Route, useLocation } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 
 import Navbar from "./layout/Navbar";
 import Hero from "./components/Hero";
@@ -15,20 +15,10 @@ import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 
 import MockInterview from "./pages/MockInterview";
-import ThemeToggle from "./components/ThemeToggle";
-
-// These pages already show the theme toggle in their own header.
-const PAGES_WITH_INLINE_TOGGLE = new Set(["/", "/login", "/signup", "/dashboard"]);
 
 export default function App() {
-  const { pathname } = useLocation();
-  const showFloatingToggle = !PAGES_WITH_INLINE_TOGGLE.has(pathname);
-
   return (
     <>
-      {showFloatingToggle ? (
-        <ThemeToggle className="fixed bottom-5 right-5 z-50 shadow-lg" />
-      ) : null}
       <Routes>
         {/* Homepage */}
         <Route

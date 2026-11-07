@@ -92,11 +92,13 @@ router.get("/sessions/me", protect, async (req, res) => {
 
     const totalSessions = sessions.length;
     const completedInterviews = sessions.filter((s) => s.mode === "mock").length;
+    // One decimal place: rounding to a whole number turned 7.6/10 into 8/10.
     const overallScore = totalSessions
       ? Math.round(
-          sessions.reduce((sum, s) => sum + (Number(s.averageScore) || 0), 0) /
-            totalSessions
-        )
+          (sessions.reduce((sum, s) => sum + (Number(s.averageScore) || 0), 0) /
+            totalSessions) *
+            10
+        ) / 10
       : 0;
 
     const categoryMap = new Map();
@@ -108,7 +110,7 @@ router.get("/sessions/me", protect, async (req, res) => {
 
     const categoryScores = [...categoryMap.entries()].map(([name, values]) => ({
       name: name.charAt(0).toUpperCase() + name.slice(1),
-      score: Math.round(values.reduce((a, b) => a + b, 0) / values.length) * 10,
+      score: Math.round((values.reduce((a, b) => a + b, 0) / values.length) * 10),
     }));
 
     return sendSuccess(res, {
