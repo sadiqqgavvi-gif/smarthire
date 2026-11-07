@@ -50,6 +50,7 @@ MongoDB is connected and which settings are missing, without exposing any secret
 | `error.reason` | Fix |
 | --- | --- |
 | `DATABASE_NOT_CONFIGURED` | `MONGO_URI` is not set on Vercel. Add it and redeploy. |
+| `DATABASE_HOST_NOT_FOUND` | The Atlas cluster is **paused** (free clusters pause after long inactivity): Atlas > Clusters > **Resume**. If it was deleted, create a new one and update `MONGO_URI`. |
 | `DATABASE_UNREACHABLE` | Add `0.0.0.0/0` in Atlas Network Access, and check that the cluster is not paused. |
 | `DATABASE_AUTH_FAILED` | Wrong database username or password in `MONGO_URI`. |
 | `DATABASE_URI_INVALID` | `MONGO_URI` is malformed (must start with `mongodb://` or `mongodb+srv://`). |
