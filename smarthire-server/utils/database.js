@@ -48,7 +48,7 @@ export const describeDatabaseError = (error) => {
       return {
         code: "DATABASE_HOST_NOT_FOUND",
         detail: networkCode,
-        hint: "The cluster hostname in MONGO_URI does not exist. The Atlas cluster may have been deleted or renamed: copy a fresh connection string from Atlas > Connect > Drivers.",
+        hint: "The cluster hostname in MONGO_URI cannot be found. Atlas removes it while a cluster is paused: open Atlas > Clusters and click Resume. If the cluster was deleted or renamed, copy a fresh connection string from Atlas > Connect > Drivers.",
       };
     }
 
