@@ -42,7 +42,7 @@ describe("Auth page", () => {
 
     await userEvent.type(screen.getByPlaceholderText(/email/i), "user@example.com");
     await userEvent.type(screen.getByPlaceholderText(/password/i), "abc12345");
-    await userEvent.click(screen.getByRole("button", { name: /login/i }));
+    await userEvent.click(screen.getByRole("button", { name: /^log in$/i }));
 
     await waitFor(() => {
       expect(screen.getByText("Home screen")).toBeInTheDocument();
@@ -74,5 +74,65 @@ describe("Auth page", () => {
         screen.getByRole("button", { name: /continue with google/i })
       ).toBeInTheDocument();
     });
+  });
+});
+
+describe("Signup page", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  const renderSignup = () =>
+    render(
+      <MemoryRouter initialEntries={["/signup"]}>
+        <Routes>
+          <Route path="/signup" element={<Auth type="signup" />} />
+          <Route path="/" element={<div>Home screen</div>} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+  test("offers Google sign-up alongside the email form", async () => {
+    authFetch.mockResolvedValue({ ok: false });
+    renderSignup();
+
+    expect(
+      await screen.findByRole("button", { name: /continue with google/i })
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /create account/i })).toBeInTheDocument();
+  });
+
+  test("blocks submission when passwords do not match", async () => {
+    authFetch.mockResolvedValue({ ok: false });
+    renderSignup();
+
+    await userEvent.type(screen.getByPlaceholderText(/^email$/i), "new@example.com");
+    await userEvent.type(screen.getByPlaceholderText(/at least 6 characters/i), "abc12345");
+    await userEvent.type(screen.getByPlaceholderText(/re-enter your password/i), "different1");
+    await userEvent.click(screen.getByRole("button", { name: /create account/i }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(/passwords do not match/i);
+    expect(axios.post).not.toHaveBeenCalled();
+  });
+
+  test("creates the account with name, email and password", async () => {
+    authFetch
+      .mockResolvedValueOnce({ ok: false })
+      .mockResolvedValueOnce({ ok: true });
+    axios.post.mockResolvedValue({ data: { message: "Registration successful" } });
+    renderSignup();
+
+    await userEvent.type(screen.getByPlaceholderText(/your name/i), "Ali Khan");
+    await userEvent.type(screen.getByPlaceholderText(/^email$/i), "new@example.com");
+    await userEvent.type(screen.getByPlaceholderText(/at least 6 characters/i), "abc12345");
+    await userEvent.type(screen.getByPlaceholderText(/re-enter your password/i), "abc12345");
+    await userEvent.click(screen.getByRole("button", { name: /create account/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Home screen")).toBeInTheDocument();
+    });
+    const [calledUrl, payload] = axios.post.mock.calls[0];
+    expect(String(calledUrl)).toContain("/api/auth/register");
+    expect(payload).toEqual({ name: "Ali Khan", email: "new@example.com", password: "abc12345" });
   });
 });

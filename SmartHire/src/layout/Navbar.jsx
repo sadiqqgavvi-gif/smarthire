@@ -96,13 +96,13 @@ export default function Navbar() {
                   to="/login"
                   className="px-4 py-2 text-gray-700 rounded-md hover:bg-gray-100 dark:text-slate-300 dark:hover:bg-slate-800 "
                 >
-                  Login
+                  Log in
                 </Link>
                 <Link
                   to="/signup"
                   className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
                 >
-                  Register Here
+                  Get started
                 </Link>
               </>
             )}
@@ -159,7 +159,7 @@ export default function Navbar() {
               Contact
             </a>
 
-            {/* Mobile Login/Register */}
+            {/* Mobile Log in / Get started */}
             {isAuthenticated ? (
               <>
                 <Link
@@ -184,14 +184,14 @@ export default function Navbar() {
                   className="text-gray-700 px-3 py-2 rounded-md hover:bg-gray-100 dark:text-slate-300 dark:hover:bg-slate-800"
                   onClick={() => setMenuOpen(false)}
                 >
-                  Login
+                  Log in
                 </Link>
                 <Link
                   to="/signup"
                   className="bg-blue-600 text-white px-3 py-2 rounded-md hover:bg-blue-700"
                   onClick={() => setMenuOpen(false)}
                 >
-                  Get Started
+                  Get started
                 </Link>
               </>
             )}

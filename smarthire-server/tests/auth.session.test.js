@@ -252,7 +252,11 @@ test("auth google login creates or reuses a verified google account", async () =
     });
 
     assert.equal(googleLoginRes.response.status, 200);
-    assert.equal(googleLoginRes.json?.message, "Google login successful");
+    assert.equal(
+      googleLoginRes.json?.message,
+      "Your SmartHire account has been created with Google"
+    );
+    assert.equal(googleLoginRes.json?.isNewUser, true);
     assert.equal(googleLoginRes.json?.user?.email, "google.user@example.com");
     assert.equal(googleLoginRes.json?.user?.authProvider, "google");
     assert.ok(googleLoginRes.json?.requestId);
@@ -262,6 +266,21 @@ test("auth google login creates or reuses a verified google account", async () =
     assert.equal(googleUser?.googleId, "google-sub-123");
     assert.equal(googleUser?.name, "Google User");
     assert.equal(googleUser?.avatarUrl, "https://example.com/avatar.png");
+
+    const secondLoginRes = await requestJson("/api/auth/google", {
+      method: "POST",
+      body: { credential: "google-id-token" },
+    });
+    assert.equal(secondLoginRes.response.status, 200);
+    assert.equal(secondLoginRes.json?.message, "Google login successful");
+    assert.equal(secondLoginRes.json?.isNewUser, false);
+
+    const registerRes = await requestJson("/api/auth/register", {
+      method: "POST",
+      body: { email: "google.user@example.com", password: "abc12345" },
+    });
+    assert.equal(registerRes.response.status, 400);
+    assert.equal(registerRes.json?.error?.code, "GOOGLE_ACCOUNT_ONLY");
   } finally {
     global.fetch = originalFetch;
   }

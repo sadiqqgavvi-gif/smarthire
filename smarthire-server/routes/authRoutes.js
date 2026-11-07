@@ -148,19 +148,24 @@ router.post("/register", authLimiter, validateAuthPayload, async (req, res) => {
 
     const { email, password } = req.body;
     const normalizedEmail = email.trim().toLowerCase();
+    const name = typeof req.body.name === "string" ? req.body.name.trim().slice(0, 80) : "";
 
     const existingUser = await User.findOne({ email: normalizedEmail });
     if (existingUser) {
+      const isGoogleOnly = !existingUser.password;
       return sendError(res, {
         status: 400,
-        code: "USER_ALREADY_EXISTS",
-        message: "User already exists",
+        code: isGoogleOnly ? "GOOGLE_ACCOUNT_ONLY" : "USER_ALREADY_EXISTS",
+        message: isGoogleOnly
+          ? "This email is already registered with Google. Please use \"Continue with Google\"."
+          : "An account with this email already exists. Please log in instead.",
       });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = new User({
       email: normalizedEmail,
+      name,
       password: hashedPassword,
       authProvider: "local",
     });
@@ -178,7 +183,7 @@ router.post("/register", authLimiter, validateAuthPayload, async (req, res) => {
       return sendError(res, {
         status: 400,
         code: "USER_ALREADY_EXISTS",
-        message: "User already exists",
+        message: "An account with this email already exists. Please log in instead.",
       });
     }
     console.error("Register failed:", error?.message || error);
@@ -294,6 +299,7 @@ router.post("/google", authLimiter, async (req, res) => {
     }
 
     let user = await User.findOne({ email: normalizedEmail });
+    const isNewUser = !user;
 
     if (!user) {
       user = new User({
@@ -316,7 +322,10 @@ router.post("/google", authLimiter, async (req, res) => {
     const accessToken = await issueSession(res, user);
 
     return sendSuccess(res, {
-      message: "Google login successful",
+      message: isNewUser
+        ? "Your SmartHire account has been created with Google"
+        : "Google login successful",
+      isNewUser,
       user: buildUserResponse(user),
       accessToken,
     });
