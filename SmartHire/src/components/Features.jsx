@@ -9,6 +9,7 @@ import {
   SlidersHorizontal,
   Volume2,
 } from "lucide-react";
+import Reveal from "./motion/Reveal";
 
 // Every card describes a feature that exists in the app today.
 const TOPICS = [
@@ -48,7 +49,7 @@ export default function Features() {
       className="scroll-mt-20 bg-slate-50 px-4 py-24 sm:px-6 lg:px-8 dark:bg-slate-900/60"
     >
       <div className="mx-auto max-w-7xl">
-        <div className="mx-auto max-w-2xl text-center">
+        <Reveal className="mx-auto max-w-2xl text-center">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-600 dark:text-blue-400">
             Features
           </p>
@@ -59,11 +60,12 @@ export default function Features() {
             Everything you need to prepare in one place: realistic questions, a voice-ready
             interview room and an AI coach that tells you exactly what to fix.
           </p>
-        </div>
+        </Reveal>
 
         <div className="mt-16 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
           {/* AI feedback (wide) */}
           <FeatureCard
+            delay={0}
             className="lg:col-span-2"
             icon={BrainCircuit}
             accent="from-blue-600 to-indigo-600"
@@ -83,6 +85,7 @@ export default function Features() {
 
           {/* Voice mock interview */}
           <FeatureCard
+            delay={100}
             icon={Mic}
             accent="from-purple-600 to-fuchsia-600"
             title="Voice-ready mock interviews"
@@ -104,6 +107,7 @@ export default function Features() {
 
           {/* Practice your way */}
           <FeatureCard
+            delay={200}
             icon={SlidersHorizontal}
             accent="from-orange-500 to-amber-500"
             title="Practice your way"
@@ -123,6 +127,7 @@ export default function Features() {
 
           {/* Progress dashboard (wide) */}
           <FeatureCard
+            delay={0}
             className="lg:col-span-2"
             icon={BarChart3}
             accent="from-emerald-500 to-teal-500"
@@ -153,6 +158,7 @@ export default function Features() {
 
           {/* Question bank (wide) */}
           <FeatureCard
+            delay={100}
             className="lg:col-span-2"
             icon={Library}
             accent="from-sky-500 to-blue-600"
@@ -173,6 +179,7 @@ export default function Features() {
 
           {/* Secure access */}
           <FeatureCard
+            delay={200}
             icon={ShieldCheck}
             accent="from-slate-700 to-slate-900 dark:from-slate-500 dark:to-slate-700"
             title="Secure and simple"
@@ -200,7 +207,7 @@ export default function Features() {
               className="absolute left-[16.66%] right-[16.66%] top-6 hidden h-px bg-gradient-to-r from-blue-300 via-purple-300 to-emerald-300 md:block dark:from-blue-500/40 dark:via-purple-500/40 dark:to-emerald-500/40"
             />
             {STEPS.map((step, index) => (
-              <li key={step.title} className="relative text-center">
+              <Reveal as="li" key={step.title} delay={index * 150} className="relative text-center">
                 <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-bold text-blue-600 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-blue-400">
                   {index + 1}
                 </div>
@@ -208,7 +215,7 @@ export default function Features() {
                 <p className="mx-auto mt-2 max-w-xs text-sm leading-6 text-slate-600 dark:text-slate-400">
                   {step.text}
                 </p>
-              </li>
+              </Reveal>
             ))}
           </ol>
         </div>
@@ -217,11 +224,12 @@ export default function Features() {
   );
 }
 
-function FeatureCard({ icon, accent, title, text, className = "", children }) {
+function FeatureCard({ icon, accent, title, text, className = "", delay = 0, children }) {
   const Icon = icon;
   return (
+    <Reveal className={className} delay={delay}>
     <div
-      className={`group relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-7 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700 dark:hover:shadow-black/30 ${className}`}
+      className={`group relative h-full overflow-hidden rounded-3xl border border-slate-200 bg-white p-7 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700 dark:hover:shadow-black/30`}
     >
       <div
         className={`flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br text-white shadow-sm ${accent}`}
@@ -232,6 +240,7 @@ function FeatureCard({ icon, accent, title, text, className = "", children }) {
       <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">{text}</p>
       {children}
     </div>
+    </Reveal>
   );
 }
 

@@ -1,5 +1,6 @@
 import { ArrowRight, Briefcase, Code2, Mic, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import Reveal from "./motion/Reveal";
 
 const PRACTICE_TRACKS = [
   {
@@ -46,7 +47,7 @@ export default function Practice() {
       className="scroll-mt-20 bg-white px-4 py-24 sm:px-6 lg:px-8 dark:bg-slate-950"
     >
       <div className="mx-auto max-w-7xl">
-        <div className="mx-auto max-w-2xl text-center">
+        <Reveal className="mx-auto max-w-2xl text-center">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-600 dark:text-blue-400">
             Practice
           </p>
@@ -57,17 +58,17 @@ export default function Practice() {
             Pick an interview track. You can choose the difficulty, the number of questions and
             whether you want a practice session or a full mock interview.
           </p>
-        </div>
+        </Reveal>
 
         <div className="mt-16 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {PRACTICE_TRACKS.map((track) => {
+          {PRACTICE_TRACKS.map((track, index) => {
             const Icon = track.icon;
             return (
+              <Reveal key={track.key} delay={index * 120}>
               <button
-                key={track.key}
                 type="button"
                 onClick={() => navigate(`/practice/${track.key}/configure`)}
-                className={`group flex flex-col rounded-3xl border border-slate-200 bg-white p-7 text-left shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-slate-900/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-slate-800 dark:bg-slate-900 dark:hover:shadow-black/30 ${track.ring}`}
+                className={`group flex h-full w-full flex-col rounded-3xl border border-slate-200 bg-white p-7 text-left shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-slate-900/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-slate-800 dark:bg-slate-900 dark:hover:shadow-black/30 ${track.ring}`}
               >
                 <div className="flex items-center justify-between">
                   <div
@@ -114,11 +115,13 @@ export default function Practice() {
                   <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
                 </span>
               </button>
+              </Reveal>
             );
           })}
         </div>
 
         {/* Mock interview banner */}
+        <Reveal>
         <div className="relative mt-10 overflow-hidden rounded-3xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 p-8 text-white shadow-lg sm:p-10">
           <div
             aria-hidden="true"
@@ -148,6 +151,7 @@ export default function Practice() {
             </button>
           </div>
         </div>
+        </Reveal>
       </div>
     </section>
   );

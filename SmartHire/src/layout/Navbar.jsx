@@ -8,6 +8,7 @@ import ThemeToggle from "../components/ThemeToggle";
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const navigate = useNavigate();
   const toggleMenu = () => setMenuOpen(!menuOpen);
 
@@ -32,6 +33,14 @@ export default function Navbar() {
     };
   }, [API_BASE_URL]);
 
+  // Transparent over the hero, solid once the page scrolls.
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 12);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
   const handleLogout = async () => {
     try {
       await logoutUser();
@@ -43,12 +52,19 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="bg-white/80 backdrop-blur-md shadow-sm fixed w-full z-50 dark:bg-slate-900/80">
+    <nav
+      className={`fixed z-50 w-full transition-all duration-300 ${
+        scrolled || menuOpen
+          ? "border-b border-slate-200/80 bg-white/80 shadow-sm backdrop-blur-md dark:border-slate-800 dark:bg-slate-950/80"
+          : "border-b border-transparent bg-transparent"
+      }`}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
 
           {/* Logo */}
-          <Link to="/" className="text-xl font-bold text-blue-600 dark:text-blue-400">
+          <Link to="/" className="flex items-center gap-2 text-xl font-bold text-slate-900 dark:text-white">
+            <img src="/smarthire-logo.svg" alt="" className="h-8 w-8" />
             SmartHire
           </Link>
 

@@ -2,6 +2,7 @@
 import { createElement, useState } from "react";
 import { Bug, CheckCircle2, Lightbulb, Loader2, MessageSquare, Send } from "lucide-react";
 import { API_BASE_URL } from "../utils/apiBaseUrl";
+import Reveal from "./motion/Reveal";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const EMPTY_FORM = { name: "", email: "", message: "" };
@@ -94,7 +95,7 @@ export default function Contact() {
       className="scroll-mt-20 bg-white px-4 py-24 sm:px-6 lg:px-8 dark:bg-slate-950"
     >
       <div className="mx-auto grid max-w-6xl gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16">
-        <div>
+        <Reveal>
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-600 dark:text-blue-400">
             Contact
           </p>
@@ -119,8 +120,9 @@ export default function Contact() {
               </li>
             ))}
           </ul>
-        </div>
+        </Reveal>
 
+        <Reveal delay={120}>
         <form
           onSubmit={handleSubmit}
           noValidate
@@ -202,6 +204,7 @@ export default function Contact() {
             </p>
           ) : null}
         </form>
+        </Reveal>
       </div>
     </section>
   );
