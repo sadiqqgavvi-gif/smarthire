@@ -60,6 +60,10 @@ const EXAMPLE_PATTERN =
 const DEFINITION_PATTERN =
   /\b(is an?|are|refers to|means|is used to|is the|is when|allows|decides|defines|determines|describes|represents|lets you|helps|controls)\b/i;
 const CODE_PATTERN = /```|`[^`]+`|=>|\bfunction\s*\(|[{};]\s*$|\w+\(\)|\bO\([^)]+\)/m;
+const NUMBER_WORD_PATTERN =
+  /\b(one|two|three|four|five|six|seven|eight|nine|ten|twelve|fifteen|twenty|thirty|fifty|hundred|thousand|dozen)\s+(weeks?|days?|months?|hours?|people|members|users|customers|bugs|features|tasks|times|percent)\b/i;
+const TOOL_PATTERN =
+  /\b(react|angular|vue|node(?:\.js)?|express|python|java|javascript|typescript|sql|mysql|postgres|mongodb|docker|git|github|jira|figma|aws|azure|firebase|excel|trello|slack|api|rest)\b/i;
 const METRIC_PATTERN = /\b\d+(?:\.\d+)?\s?(?:%|percent|x|ms|seconds?|minutes?|hours?|days?|weeks?|months?|users?|people|members?|requests?)?\b/i;
 
 const STAR_PARTS = {
@@ -71,12 +75,12 @@ const STAR_PARTS = {
   task: {
     label: "Task",
     pattern:
-      /\b(my (?:role|responsibility|task|job|goal)|i (?:needed|had|was asked|was supposed) to|i was responsible|was responsible for|the (?:goal|task|challenge|problem|deadline) was|we (?:needed|had) to|our goal)\b/i,
+      /\b(my (?:role|responsibility|task|job|goal)|i (?:needed|had|was asked|was supposed|wanted|was expected)(?: \w+){0,3} to|i was responsible|was responsible for|the (?:goal|task|challenge|problem|deadline) was|we (?:needed|had)(?: \w+){0,3} to|our goal)\b/i,
   },
   action: {
     label: "Action",
     pattern:
-      /\b(i (?:decided|implemented|organi[sz]ed|arranged|spoke|talked|met|created|built|led|proposed|suggested|scheduled|set up|took|started|reached out|analy[sz]ed|listened|explained|asked|broke|divided|delegated|wrote|designed|fixed|resolved|focused|worked|called|coordinated|helped|made sure|ensured))\b/i,
+      /\b((?:i|and|then)(?: \w+ly)? (?:decided|implemented|organi[sz]ed|arranged|spoke|talked|met|created|built|led|proposed|suggested|scheduled|set up|took|started|reached out|analy[sz]ed|listened|explained|asked|broke|divided|delegated|wrote|designed|fixed|resolved|focused|worked|called|coordinated|helped|made sure|ensured|followed|studied|practi[cs]ed|read|watched|completed|reviewed|tested|debugged|researched|contacted|prepared|presented|volunteered|stayed|learned|learnt|trained|refactored|automated))\b/i,
   },
   result: {
     label: "Result",
@@ -131,6 +135,10 @@ const SYNONYMS = {
   manager: ["boss", "supervisor", "lead"],
   pressure: ["stress", "urgent", "tight"],
   feedback: ["criticism", "review", "comment"],
+  technology: ["framework", "language", "library", "tool", "stack", "react", "angular", "node", "python", "java", "javascript", "sql", "cloud", "api"],
+  quickly: ["week", "days", "fast", "quick", "short time", "deadline"],
+  difficult: ["hard", "challenging", "tough", "problem"],
+  project: ["assignment", "app", "application", "system", "website"],
 };
 
 // Removes near-duplicates such as "variable" / "variables" / "scoped" / "scope".
@@ -237,6 +245,12 @@ export const analyzeAnswer = ({ question = "", answer = "", category = "general"
   const wordCount = text ? text.split(/\s+/).filter(Boolean).length : 0;
   const sentences = splitSentences(text);
 
+  // Story structure (also used to judge relevance of behavioral / situational answers)
+  const starParts = normalizedCategory === "behavioral" ? scoreParts(lower, STAR_PARTS) : null;
+  const situationalParts =
+    normalizedCategory === "situational" ? scoreParts(lower, SITUATIONAL_PARTS) : null;
+  const storyRatio = starParts?.ratio ?? situationalParts?.ratio ?? 0;
+
   // Relevance -------------------------------------------------------------
   const questionTerms = keyTerms(question, { dropQuestionFiller: true });
   const answerTerms = keyTerms(text);
@@ -265,7 +279,11 @@ export const analyzeAnswer = ({ question = "", answer = "", category = "general"
     conceptCoverage === null
       ? clamp(3 + Math.sqrt(questionCoverage) * 7)
       : clamp(2 + (0.45 * Math.sqrt(questionCoverage) + 0.55 * Math.min(1, Math.sqrt(conceptCoverage) * 1.2)) * 8);
-  if (wordCount >= 8 && questionHits.length === 0 && coveredConcepts.length === 0) relevance = Math.min(relevance, 2);
+  if (wordCount >= 8 && questionHits.length === 0 && coveredConcepts.length === 0) {
+    // Behavioral answers often tell a relevant story without repeating the question's words,
+    // so only treat them as off-topic when they are not a real story either.
+    relevance = storyRatio >= 0.5 ? Math.max(Math.min(relevance, 6), 3 + storyRatio * 4) : Math.min(relevance, 2);
+  }
 
   // Depth -----------------------------------------------------------------
   const reasoningCount = (lower.match(REASONING_PATTERN) || []).length;
@@ -277,15 +295,11 @@ export const analyzeAnswer = ({ question = "", answer = "", category = "general"
 
   // Structure -------------------------------------------------------------
   let structure;
-  let starParts = null;
-  let situationalParts = null;
   const signposts = (lower.match(SIGNPOST_PATTERN) || []).length;
 
   if (normalizedCategory === "behavioral") {
-    starParts = scoreParts(lower, STAR_PARTS);
     structure = clamp(1 + starParts.ratio * 8 + Math.min(signposts * 0.5, 1));
   } else if (normalizedCategory === "situational") {
-    situationalParts = scoreParts(lower, SITUATIONAL_PARTS);
     structure = clamp(1 + situationalParts.ratio * 8 + Math.min(signposts * 0.5, 1));
   } else {
     structure = 2;
@@ -312,7 +326,8 @@ export const analyzeAnswer = ({ question = "", answer = "", category = "general"
   const hasExample = EXAMPLE_PATTERN.test(text);
   let examples = 2;
   if (hasExample) examples += 5;
-  if (METRIC_PATTERN.test(text)) examples += 2;
+  if (METRIC_PATTERN.test(text) || NUMBER_WORD_PATTERN.test(text)) examples += 2;
+  if (normalizedCategory !== "technical" && TOOL_PATTERN.test(text)) examples += 1.5;
   if (normalizedCategory === "technical" && CODE_PATTERN.test(text)) examples += 2;
   if (normalizedCategory === "behavioral" && starParts?.present.includes("result") && METRIC_PATTERN.test(text)) examples += 1;
   examples = clamp(examples);
@@ -342,6 +357,7 @@ export const analyzeAnswer = ({ question = "", answer = "", category = "general"
     missingStarParts: starParts?.missing || [],
     missingSituationalParts: situationalParts?.missing || [],
     hasExample,
+    hasSpecifics: METRIC_PATTERN.test(text) || NUMBER_WORD_PATTERN.test(text) || TOOL_PATTERN.test(text),
     offTopic: relevance <= 2 && wordCount >= 15,
     category: normalizedCategory,
   };
@@ -386,7 +402,9 @@ const WEAKNESS_TEXT = {
       : "Some sentences are long or repetitive, which makes the answer harder to follow.",
   examples: (a) =>
     a.category === "behavioral"
-      ? "Add specifics: names of tools, numbers or a measurable result."
+      ? a.hasSpecifics
+        ? "Make the result measurable: how much time you saved, what improved or what feedback you received."
+        : "Add specifics: names of tools, numbers or a measurable result."
       : a.category === "situational"
         ? "Mention a similar situation you have faced, or a concrete detail, to make the plan believable."
         : a.hasExample

@@ -93,3 +93,22 @@ test("evaluateInterviewAnswer works without a database or AI key and returns the
   assert.ok(evaluation.referenceAnswer);
   assert.ok(typeof evaluation.fillerWords?.count === "number");
 });
+
+test("a strong STAR story is not treated as off-topic when it doesn't repeat the question's words", () => {
+  const result = smartEvaluate(
+    "Describe a situation where you had to learn a new technology quickly.",
+    "When our team moved to React I had one week to learn it. I followed the official tutorial every evening, built a small to-do app and asked a senior developer to review my code. As a result I delivered my first feature on time.",
+    "behavioral"
+  );
+  assert.ok(result.score >= 6.5, `expected >= 6.5, got ${result.score}`);
+  assert.doesNotMatch(result.weaknesses, /does not address the question/i);
+});
+
+test("an off-topic behavioral answer is still capped", () => {
+  const result = smartEvaluate(
+    "Describe a situation where you had to learn a new technology quickly.",
+    "I like playing cricket on weekends with my friends and we usually win the matches because we practice a lot.",
+    "behavioral"
+  );
+  assert.ok(result.score <= 2, `expected <= 2, got ${result.score}`);
+});

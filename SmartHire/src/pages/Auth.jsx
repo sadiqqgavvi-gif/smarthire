@@ -386,7 +386,9 @@ export default function Auth({ type }) {
             <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/60">
               {googleClientId ? (
                 <>
-                  <div ref={googleButtonRef} className="min-h-[44px]" />
+                  {/* colorScheme "light" keeps Google's iframe transparent; a dark page would otherwise
+                      paint an opaque white box behind the button. */}
+                  <div ref={googleButtonRef} className="min-h-[44px]" style={{ colorScheme: "light" }} />
                   <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
                     {googleLoading
                       ? "Signing you in with Google..."
