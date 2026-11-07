@@ -22,6 +22,8 @@ import {
 import { useNavigate, useLocation } from "react-router-dom";
 import { authFetch, logoutUser } from "../utils/authFetch";
 import { API_BASE_URL } from "../utils/apiBaseUrl";
+import ThemeToggle from "../components/ThemeToggle";
+import { useTheme } from "../theme/themeContext";
 
 const scoreToPercent = (value) => `${Math.round((Number(value) || 0) * 10)}%`;
 
@@ -47,17 +49,17 @@ const buildCategoryScores = (sessions = []) => {
 };
 
 const StatCard = ({ icon, title, value, description }) => (
-  <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+  <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
     <div className="flex items-center justify-between gap-3">
       <div>
-        <p className="text-sm font-medium text-slate-500">{title}</p>
-        <div className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">{value}</div>
+        <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{title}</p>
+        <div className="mt-2 text-3xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">{value}</div>
       </div>
-      <div className="rounded-xl bg-slate-100 p-3 text-slate-700">
+      <div className="rounded-xl bg-slate-100 p-3 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
         {React.createElement(icon, { className: "h-5 w-5" })}
       </div>
     </div>
-    {description ? <p className="mt-4 text-sm text-slate-500">{description}</p> : null}
+    {description ? <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">{description}</p> : null}
   </div>
 );
 
@@ -72,6 +74,10 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
 
   const navigate = useNavigate();
+  const { isDark } = useTheme();
+  const chartColors = isDark
+    ? { grid: "#334155", tick: "#94a3b8", bar: "#e2e8f0", cursor: "rgba(148, 163, 184, 0.12)", tooltipBg: "#0f172a", tooltipBorder: "#334155", tooltipText: "#f1f5f9" }
+    : { grid: "#e2e8f0", tick: "#64748b", bar: "#0f172a", cursor: "rgba(15, 23, 42, 0.06)", tooltipBg: "#ffffff", tooltipBorder: "#e2e8f0", tooltipText: "#0f172a" };
   const location = useLocation();
 
   useEffect(() => {
@@ -183,34 +189,35 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="border-b border-slate-200 bg-white/90 backdrop-blur">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
+      <div className="border-b border-slate-200 bg-white/90 backdrop-blur dark:border-slate-700 dark:bg-slate-900/90">
         <div className="mx-auto flex max-w-7xl flex-col gap-4 px-6 py-6 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <div className="flex items-center gap-2 text-sm font-medium text-slate-500">
+            <div className="flex items-center gap-2 text-sm font-medium text-slate-500 dark:text-slate-400">
               <Sparkles className="h-4 w-4" />
               Interview analytics
             </div>
-            <h1 className="mt-1 text-3xl font-semibold tracking-tight text-slate-900">
+            <h1 className="mt-1 text-3xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
               Dashboard
             </h1>
-            <p className="mt-2 max-w-2xl text-sm text-slate-500">
+            <p className="mt-2 max-w-2xl text-sm text-slate-500 dark:text-slate-400">
               Review your practice activity and switch between practice and mock interview
               performance for a more focused view of readiness.
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
+            <ThemeToggle />
             <button
               onClick={() => window.history.back()}
-              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
             >
               <ArrowLeft className="h-4 w-4" />
               Back
             </button>
             <button
               onClick={handleLogout}
-              className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
+              className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white"
             >
               <LogOut className="h-4 w-4" />
               Logout
@@ -221,13 +228,13 @@ export default function Dashboard() {
 
       <main className="mx-auto max-w-7xl px-6 py-8">
         <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-          <div className="inline-flex rounded-2xl border border-slate-200 bg-white p-1 shadow-sm">
+          <div className="inline-flex rounded-2xl border border-slate-200 bg-white p-1 shadow-sm dark:border-slate-700 dark:bg-slate-900">
             <button
               onClick={() => setActiveView("overview")}
               className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition ${
                 activeView === "overview"
-                  ? "bg-slate-900 text-white"
-                  : "text-slate-600 hover:bg-slate-100"
+                  ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900"
+                  : "text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
               }`}
             >
               <ChartColumnIncreasing className="h-4 w-4" />
@@ -237,8 +244,8 @@ export default function Dashboard() {
               onClick={() => setActiveView("mock")}
               className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition ${
                 activeView === "mock"
-                  ? "bg-slate-900 text-white"
-                  : "text-slate-600 hover:bg-slate-100"
+                  ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900"
+                  : "text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
               }`}
             >
               <Mic className="h-4 w-4" />
@@ -248,8 +255,8 @@ export default function Dashboard() {
               onClick={() => setActiveView("practice")}
               className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition ${
                 activeView === "practice"
-                  ? "bg-slate-900 text-white"
-                  : "text-slate-600 hover:bg-slate-100"
+                  ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900"
+                  : "text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
               }`}
             >
               <BookOpenCheck className="h-4 w-4" />
@@ -257,7 +264,7 @@ export default function Dashboard() {
             </button>
           </div>
 
-          <p className="text-sm text-slate-500">{viewStatusText}</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">{viewStatusText}</p>
         </div>
 
         {activeView === "overview" ? (
@@ -284,20 +291,20 @@ export default function Dashboard() {
         ) : null}
 
         <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:col-span-2">
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:col-span-2 dark:border-slate-700 dark:bg-slate-900">
             <div className="mb-5 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <h2 className="text-xl font-semibold tracking-tight text-slate-900">
+                <h2 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
                   {chartCopy.title}
                 </h2>
-                <p className="text-sm text-slate-500">{chartCopy.subtitle}</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">{chartCopy.subtitle}</p>
               </div>
               {activeView === "mock" ? (
-                <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
+                <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-400">
                   {mockStats.totalMockSessions} mock sessions
                 </div>
               ) : activeView === "practice" ? (
-                <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
+                <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-400">
                   {practiceStats.totalSessions} practice sessions
                 </div>
               ) : null}
@@ -305,43 +312,47 @@ export default function Dashboard() {
 
             <div className="h-[360px] w-full">
               {loading ? (
-                <div className="flex h-full items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50 text-sm text-slate-500">
+                <div className="flex h-full items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50 text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-400">
                   Loading dashboard...
                 </div>
               ) : performanceData.length ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={performanceData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
-                    <XAxis dataKey="name" tickLine={false} axisLine={false} />
-                    <YAxis domain={[0, 100]} tickLine={false} axisLine={false} />
+                    <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} vertical={false} />
+                    <XAxis dataKey="name" tickLine={false} axisLine={false} tick={{ fill: chartColors.tick }} />
+                    <YAxis domain={[0, 100]} tickLine={false} axisLine={false} tick={{ fill: chartColors.tick }} />
                     <Tooltip
-                      cursor={{ fill: "rgba(15, 23, 42, 0.06)" }}
+                      cursor={{ fill: chartColors.cursor }}
                       contentStyle={{
                         borderRadius: "12px",
-                        border: "1px solid #e2e8f0",
+                        border: `1px solid ${chartColors.tooltipBorder}`,
+                        background: chartColors.tooltipBg,
+                        color: chartColors.tooltipText,
                         boxShadow: "0 12px 40px rgba(15, 23, 42, 0.08)",
                       }}
+                      labelStyle={{ color: chartColors.tooltipText }}
+                      itemStyle={{ color: chartColors.tooltipText }}
                     />
-                    <Bar dataKey="score" fill="#0f172a" radius={[10, 10, 0, 0]} />
+                    <Bar dataKey="score" fill={chartColors.bar} radius={[10, 10, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="flex h-full items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50 text-sm text-slate-500">
+                <div className="flex h-full items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50 text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-400">
                   No data available for this view yet.
                 </div>
               )}
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-semibold tracking-tight text-slate-900">
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+            <h2 className="text-lg font-semibold tracking-tight text-slate-900 dark:text-slate-100">
               {activeView === "mock"
                 ? "Mock interview summary"
                 : activeView === "practice"
                   ? "Practice summary"
                   : "Performance summary"}
             </h2>
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
               {activeView === "mock"
                 ? "A focused snapshot of your mock interview progress."
                 : activeView === "practice"
@@ -351,63 +362,63 @@ export default function Dashboard() {
 
             {activeView === "mock" ? (
               <div className="mt-6 space-y-4">
-                <div className="rounded-2xl bg-slate-50 p-4">
-                  <p className="text-sm text-slate-500">Average mock score</p>
-                  <p className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">
+                <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-800/60">
+                  <p className="text-sm text-slate-500 dark:text-slate-400">Average mock score</p>
+                  <p className="mt-2 text-3xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
                     {scoreToPercent(mockStats.averageMockScore)}
                   </p>
                 </div>
-                <div className="rounded-2xl bg-slate-50 p-4">
-                  <p className="text-sm text-slate-500">Mock interviews completed</p>
-                  <p className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">
+                <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-800/60">
+                  <p className="text-sm text-slate-500 dark:text-slate-400">Mock interviews completed</p>
+                  <p className="mt-2 text-3xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
                     {mockStats.totalMockSessions}
                   </p>
                 </div>
-                <div className="rounded-2xl bg-slate-50 p-4">
-                  <p className="text-sm text-slate-500">Attempted answers</p>
-                  <p className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">
+                <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-800/60">
+                  <p className="text-sm text-slate-500 dark:text-slate-400">Attempted answers</p>
+                  <p className="mt-2 text-3xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
                     {mockStats.totalAttempts}
                   </p>
                 </div>
               </div>
             ) : activeView === "practice" ? (
               <div className="mt-6 space-y-4">
-                <div className="rounded-2xl bg-slate-50 p-4">
-                  <p className="text-sm text-slate-500">Average practice score</p>
-                  <p className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">
+                <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-800/60">
+                  <p className="text-sm text-slate-500 dark:text-slate-400">Average practice score</p>
+                  <p className="mt-2 text-3xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
                     {scoreToPercent(practiceStats.averageScore)}
                   </p>
                 </div>
-                <div className="rounded-2xl bg-slate-50 p-4">
-                  <p className="text-sm text-slate-500">Practice sessions completed</p>
-                  <p className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">
+                <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-800/60">
+                  <p className="text-sm text-slate-500 dark:text-slate-400">Practice sessions completed</p>
+                  <p className="mt-2 text-3xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
                     {practiceStats.totalSessions}
                   </p>
                 </div>
-                <div className="rounded-2xl bg-slate-50 p-4">
-                  <p className="text-sm text-slate-500">Attempted answers</p>
-                  <p className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">
+                <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-800/60">
+                  <p className="text-sm text-slate-500 dark:text-slate-400">Attempted answers</p>
+                  <p className="mt-2 text-3xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
                     {practiceStats.totalAttempts}
                   </p>
                 </div>
               </div>
             ) : (
               <div className="mt-6 space-y-4">
-                <div className="rounded-2xl bg-slate-50 p-4">
-                  <p className="text-sm text-slate-500">Overall score</p>
-                  <p className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">
+                <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-800/60">
+                  <p className="text-sm text-slate-500 dark:text-slate-400">Overall score</p>
+                  <p className="mt-2 text-3xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
                     {scoreToPercent(stats.overallScore)}
                   </p>
                 </div>
-                <div className="rounded-2xl bg-slate-50 p-4">
-                  <p className="text-sm text-slate-500">Mock interviews completed</p>
-                  <p className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">
+                <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-800/60">
+                  <p className="text-sm text-slate-500 dark:text-slate-400">Mock interviews completed</p>
+                  <p className="mt-2 text-3xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
                     {stats.completedInterviews}
                   </p>
                 </div>
-                <div className="rounded-2xl bg-slate-50 p-4">
-                  <p className="text-sm text-slate-500">Active categories</p>
-                  <p className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">
+                <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-800/60">
+                  <p className="text-sm text-slate-500 dark:text-slate-400">Active categories</p>
+                  <p className="mt-2 text-3xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
                     {performanceData.length}
                   </p>
                 </div>

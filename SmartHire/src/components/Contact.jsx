@@ -26,10 +26,10 @@ export default function Contact() {
   };
 
   return (
-    <section id="contact" className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
+    <section id="contact" className="py-20 px-4 sm:px-6 lg:px-8 bg-white dark:bg-slate-900">
       <div className="max-w-4xl mx-auto text-center">
-        <h2 className="text-3xl font-bold text-gray-900 mb-6">Contact Us</h2>
-        <p className="text-gray-600 mb-12">
+        <h2 className="text-3xl font-bold text-gray-900 mb-6 dark:text-slate-100">Contact Us</h2>
+        <p className="text-gray-600 mb-12 dark:text-slate-400">
           Have questions? Our team is here to help.
         </p>
 
@@ -41,19 +41,19 @@ export default function Contact() {
             type="text"
             placeholder="Full Name"
             required
-            className="p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+            className="p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none dark:border-slate-600"
           />
           <input
             type="email"
             placeholder="Email Address"
             required
-            className="p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+            className="p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none dark:border-slate-600"
           />
           <textarea
             rows="4"
             placeholder="Your Message"
             required
-            className="p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+            className="p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none dark:border-slate-600"
           ></textarea>
           <button
             type="submit"

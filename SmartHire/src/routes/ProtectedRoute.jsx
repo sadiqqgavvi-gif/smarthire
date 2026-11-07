@@ -40,7 +40,7 @@ export default function ProtectedRoute({ children }) {
   }, [API_BASE_URL]);
 
   if (isChecking) {
-    return <div className="p-6 text-gray-500">Checking authentication...</div>;
+    return <div className="p-6 text-gray-500 dark:text-slate-400">Checking authentication...</div>;
   }
 
   if (!isAuthorized) {

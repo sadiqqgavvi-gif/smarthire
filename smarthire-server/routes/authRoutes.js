@@ -25,7 +25,9 @@ const parseCookies = (cookieHeader = "") =>
 const hashToken = (token) =>
   crypto.createHash("sha256").update(token).digest("hex");
 
-const isProd = process.env.NODE_ENV === "production";
+// Frontend (Netlify) and backend (Vercel) live on different domains in production,
+// so cookies must be SameSite=None; Secure there. Vercel always serves over HTTPS.
+const isProd = process.env.NODE_ENV === "production" || Boolean(process.env.VERCEL);
 const cookieSameSite = isProd ? "none" : "lax";
 
 const accessCookieOptions = {
@@ -72,6 +74,20 @@ const buildUserResponse = (user) => ({
   authProvider: user.authProvider || "local",
 });
 
+const isJwtConfigured = () =>
+  Boolean(process.env.ACCESS_TOKEN_SECRET || process.env.JWT_SECRET) &&
+  Boolean(process.env.REFRESH_TOKEN_SECRET || process.env.JWT_SECRET);
+
+const sendJwtConfigError = (res) =>
+  sendError(res, {
+    status: 500,
+    code: "AUTH_CONFIG_ERROR",
+    message: "Login is not configured on the server (JWT_SECRET is missing)",
+  });
+
+// Issues the session cookies and also returns the access token so the client can
+// fall back to an Authorization header when the browser blocks third-party cookies
+// (Safari, Brave, Chrome incognito).
 const issueSession = async (res, user) => {
   const accessToken = signAccessToken(user);
   const refreshToken = signRefreshToken(user);
@@ -81,6 +97,7 @@ const issueSession = async (res, user) => {
   });
 
   setAuthCookies(res, accessToken, refreshToken);
+  return accessToken;
 };
 
 const clearAuthCookies = (res) => {
@@ -127,6 +144,8 @@ const resolveLogoutUserId = async (req) => {
 
 router.post("/register", authLimiter, validateAuthPayload, async (req, res) => {
   try {
+    if (!isJwtConfigured()) return sendJwtConfigError(res);
+
     const { email, password } = req.body;
     const normalizedEmail = email.trim().toLowerCase();
 
@@ -147,13 +166,22 @@ router.post("/register", authLimiter, validateAuthPayload, async (req, res) => {
     });
     await newUser.save();
 
-    await issueSession(res, newUser);
+    const accessToken = await issueSession(res, newUser);
 
     return sendSuccess(res, {
       message: "Registration successful",
       user: buildUserResponse(newUser),
+      accessToken,
     });
   } catch (error) {
+    if (error?.code === 11000) {
+      return sendError(res, {
+        status: 400,
+        code: "USER_ALREADY_EXISTS",
+        message: "User already exists",
+      });
+    }
+    console.error("Register failed:", error?.message || error);
     return sendError(res, {
       status: 500,
       code: "AUTH_REGISTER_FAILED",
@@ -164,6 +192,8 @@ router.post("/register", authLimiter, validateAuthPayload, async (req, res) => {
 
 router.post("/login", authLimiter, validateAuthPayload, async (req, res) => {
   try {
+    if (!isJwtConfigured()) return sendJwtConfigError(res);
+
     const { email, password } = req.body;
     const normalizedEmail = email.trim().toLowerCase();
 
@@ -172,7 +202,7 @@ router.post("/login", authLimiter, validateAuthPayload, async (req, res) => {
       return sendError(res, {
         status: 404,
         code: "USER_NOT_FOUND",
-        message: "User not found",
+        message: "No account found with this email. Please sign up first.",
       });
     }
 
@@ -189,17 +219,19 @@ router.post("/login", authLimiter, validateAuthPayload, async (req, res) => {
       return sendError(res, {
         status: 400,
         code: "INVALID_CREDENTIALS",
-        message: "Invalid credentials",
+        message: "Incorrect email or password",
       });
     }
 
-    await issueSession(res, user);
+    const accessToken = await issueSession(res, user);
 
     return sendSuccess(res, {
       message: "Login successful",
       user: buildUserResponse(user),
+      accessToken,
     });
   } catch (error) {
+    console.error("Login failed:", error?.message || error);
     return sendError(res, {
       status: 500,
       code: "AUTH_LOGIN_FAILED",
@@ -211,7 +243,7 @@ router.post("/login", authLimiter, validateAuthPayload, async (req, res) => {
 router.post("/google", authLimiter, async (req, res) => {
   try {
     const credential = req.body?.credential || req.body?.idToken;
-    const googleClientId = process.env.GOOGLE_CLIENT_ID;
+    const googleClientId = (process.env.GOOGLE_CLIENT_ID || "").trim();
 
     if (!googleClientId) {
       return sendError(res, {
@@ -220,6 +252,8 @@ router.post("/google", authLimiter, async (req, res) => {
         message: "Google sign-in is not configured on the server",
       });
     }
+
+    if (!isJwtConfigured()) return sendJwtConfigError(res);
 
     if (!credential || typeof credential !== "string") {
       return sendError(res, {
@@ -279,13 +313,15 @@ router.post("/google", authLimiter, async (req, res) => {
       await user.save();
     }
 
-    await issueSession(res, user);
+    const accessToken = await issueSession(res, user);
 
     return sendSuccess(res, {
       message: "Google login successful",
       user: buildUserResponse(user),
+      accessToken,
     });
   } catch (error) {
+    console.error("Google login failed:", error?.message || error);
     return sendError(res, {
       status: 500,
       code: "AUTH_GOOGLE_FAILED",
@@ -381,6 +417,7 @@ router.post("/refresh", async (req, res) => {
     return sendSuccess(res, {
       message: "Session refreshed",
       user: buildUserResponse(user),
+      accessToken: newAccessToken,
     });
   } catch {
     clearAuthCookies(res);

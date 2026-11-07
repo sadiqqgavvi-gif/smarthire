@@ -1,4 +1,5 @@
 import { API_BASE_URL } from "./apiBaseUrl";
+import { clearAccessToken, getAccessToken, setAccessToken } from "./authToken";
 
 let refreshInFlight = null;
 let lastRefreshFailureAt = 0;
@@ -53,18 +54,36 @@ const refreshSession = async () => {
 
   if (!refreshResponse?.ok) {
     lastRefreshFailureAt = Date.now();
+    clearAccessToken();
+    return false;
   }
 
-  return Boolean(refreshResponse?.ok);
+  try {
+    const body = await refreshResponse.clone().json();
+    if (body?.accessToken) setAccessToken(body.accessToken);
+  } catch {
+    // Body is optional; cookies were refreshed anyway.
+  }
+
+  return true;
+};
+
+const buildHeaders = (headers = {}) => {
+  const token = getAccessToken();
+  const hasAuthHeader = Object.keys(headers).some(
+    (key) => key.toLowerCase() === "authorization"
+  );
+
+  return token && !hasAuthHeader
+    ? { ...headers, Authorization: `Bearer ${token}` }
+    : { ...headers };
 };
 
 export const authFetch = async (url, options = {}, attemptRefresh = true) => {
   const response = await fetch(url, {
     ...options,
     credentials: "include",
-    headers: {
-      ...(options.headers || {}),
-    },
+    headers: buildHeaders(options.headers),
   });
 
   if (response.status !== 401 || !shouldAttemptRefresh(url, attemptRefresh)) {
@@ -84,18 +103,19 @@ export const authFetch = async (url, options = {}, attemptRefresh = true) => {
   return fetch(url, {
     ...options,
     credentials: "include",
-    headers: {
-      ...(options.headers || {}),
-    },
+    headers: buildHeaders(options.headers),
   });
 };
 
 export const logoutUser = async () => {
-  const response = await authFetch(
-    `${API_BASE_URL}/api/auth/logout`,
-    { method: "POST" },
-    false
-  );
-  lastRefreshFailureAt = 0;
-  return response;
+  try {
+    return await authFetch(
+      `${API_BASE_URL}/api/auth/logout`,
+      { method: "POST" },
+      false
+    );
+  } finally {
+    lastRefreshFailureAt = 0;
+    clearAccessToken();
+  }
 };

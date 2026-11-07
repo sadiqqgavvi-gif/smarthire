@@ -316,31 +316,31 @@ export default function MockInterview() {
 
   if (current >= questions.length) {
     return (
-      <div className="min-h-screen bg-gray-50 px-4 py-12">
-        <div className="mx-auto max-w-3xl rounded-2xl bg-white p-8 text-center shadow">
-          <p className="text-sm font-medium uppercase tracking-wide text-slate-500">
+      <div className="min-h-screen bg-gray-50 px-4 py-12 dark:bg-slate-950">
+        <div className="mx-auto max-w-3xl rounded-2xl bg-white p-8 text-center shadow dark:bg-slate-900">
+          <p className="text-sm font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
             Mock interview complete
           </p>
-          <h2 className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">
+          <h2 className="mt-2 text-3xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
             Review your results
           </h2>
-          <p className="mx-auto mt-3 max-w-2xl text-sm text-slate-600">
+          <p className="mx-auto mt-3 max-w-2xl text-sm text-slate-600 dark:text-slate-400">
             You answered {scores.length} of {questions.length} questions. Save this attempt to your
             dashboard, or retry the mock interview to improve your responses.
           </p>
 
           <div className="mt-8 grid gap-4 sm:grid-cols-3">
-            <div className="rounded-2xl bg-slate-50 p-4">
-              <p className="text-sm text-slate-500">Average score</p>
-              <p className="mt-2 text-3xl font-semibold text-slate-900">{averageScore}/10</p>
+            <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-800/60">
+              <p className="text-sm text-slate-500 dark:text-slate-400">Average score</p>
+              <p className="mt-2 text-3xl font-semibold text-slate-900 dark:text-slate-100">{averageScore}/10</p>
             </div>
-            <div className="rounded-2xl bg-slate-50 p-4">
-              <p className="text-sm text-slate-500">Questions</p>
-              <p className="mt-2 text-3xl font-semibold text-slate-900">{questions.length}</p>
+            <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-800/60">
+              <p className="text-sm text-slate-500 dark:text-slate-400">Questions</p>
+              <p className="mt-2 text-3xl font-semibold text-slate-900 dark:text-slate-100">{questions.length}</p>
             </div>
-            <div className="rounded-2xl bg-slate-50 p-4">
-              <p className="text-sm text-slate-500">Attempted</p>
-              <p className="mt-2 text-3xl font-semibold text-slate-900">{scores.length}</p>
+            <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-800/60">
+              <p className="text-sm text-slate-500 dark:text-slate-400">Attempted</p>
+              <p className="mt-2 text-3xl font-semibold text-slate-900 dark:text-slate-100">{scores.length}</p>
             </div>
           </div>
 
@@ -349,7 +349,7 @@ export default function MockInterview() {
               type="button"
               onClick={saveSession}
               disabled={savingSession || sessionSaved || scores.length === 0}
-              className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-medium text-white disabled:cursor-not-allowed disabled:bg-slate-300"
+              className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-medium text-white disabled:cursor-not-allowed disabled:bg-slate-300 dark:disabled:bg-slate-700 dark:bg-slate-100 dark:text-slate-900"
             >
               <Save className="h-4 w-4" />
               {sessionSaved ? "Saved to dashboard" : savingSession ? "Saving..." : "Save to dashboard"}
@@ -357,7 +357,7 @@ export default function MockInterview() {
             <button
               type="button"
               onClick={retryInterview}
-              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
             >
               <RotateCcw className="h-4 w-4" />
               Retry mock interview
@@ -365,7 +365,7 @@ export default function MockInterview() {
             <button
               type="button"
               onClick={() => navigate("/dashboard")}
-              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
             >
               <BarChart3 className="h-4 w-4" />
               View dashboard
@@ -373,22 +373,22 @@ export default function MockInterview() {
             <button
               type="button"
               onClick={() => navigate(-1)}
-              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
             >
               <ArrowLeft className="h-4 w-4" />
               Back
             </button>
           </div>
 
-          {saveMessage ? <p className="mt-4 text-sm text-slate-600">{saveMessage}</p> : null}
+          {saveMessage ? <p className="mt-4 text-sm text-slate-600 dark:text-slate-400">{saveMessage}</p> : null}
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4">
-      <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow p-8">
+    <div className="min-h-screen bg-gray-50 py-12 px-4 dark:bg-slate-950">
+      <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow p-8 dark:bg-slate-900">
         <h2 className="text-xl font-semibold mb-6">Mock Interview — {type}</h2>
 
         <div className="mb-4 flex items-start justify-between gap-4">
@@ -398,7 +398,7 @@ export default function MockInterview() {
           <button
             type="button"
             onClick={() => speakText(questions[current]?.question || "")}
-            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-gray-200 text-gray-700 hover:bg-gray-50"
+            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-gray-200 text-gray-700 hover:bg-gray-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
             title="Read question aloud"
             aria-label="Read question aloud"
           >
@@ -418,7 +418,7 @@ export default function MockInterview() {
             type="button"
             onClick={listening ? stopListening : startListening}
             disabled={!voiceSupported || evaluating || Boolean(feedback)}
-            className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:bg-slate-300"
+            className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:bg-slate-300 dark:disabled:bg-slate-700 dark:bg-slate-100 dark:text-slate-900"
             title={listening ? "Stop voice input" : "Start voice input"}
           >
             {listening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
@@ -429,7 +429,7 @@ export default function MockInterview() {
             <button
               type="button"
               onClick={stopSpeaking}
-              className="inline-flex items-center gap-2 rounded-xl border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              className="inline-flex items-center gap-2 rounded-xl border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
               title="Stop audio"
             >
               <VolumeX className="h-4 w-4" />
@@ -438,11 +438,11 @@ export default function MockInterview() {
           ) : null}
 
           {!voiceSupported ? (
-            <span className="text-sm text-gray-500">Voice input is not supported in this browser.</span>
+            <span className="text-sm text-gray-500 dark:text-slate-400">Voice input is not supported in this browser.</span>
           ) : null}
-          {voiceMessage ? <span className="text-sm text-gray-500">{voiceMessage}</span> : null}
+          {voiceMessage ? <span className="text-sm text-gray-500 dark:text-slate-400">{voiceMessage}</span> : null}
           {interimTranscript ? (
-            <span className="text-sm italic text-gray-500">{interimTranscript}</span>
+            <span className="text-sm italic text-gray-500 dark:text-slate-400">{interimTranscript}</span>
           ) : null}
         </div>
 
@@ -456,13 +456,13 @@ export default function MockInterview() {
           </button>
         ) : (
           <>
-            <div className="bg-gray-100 p-4 rounded-xl mb-4">
+            <div className="bg-gray-100 p-4 rounded-xl mb-4 dark:bg-slate-800">
               <div className="mb-2 flex items-center justify-between gap-4">
                 <h3 className="font-semibold">AI Feedback</h3>
                 <button
                   type="button"
                   onClick={() => speakText(feedbackText)}
-                  className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-gray-200 text-gray-700 hover:bg-white"
+                  className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-gray-200 text-gray-700 hover:bg-white dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-700"
                   title="Read feedback aloud"
                   aria-label="Read feedback aloud"
                 >
@@ -479,9 +479,9 @@ export default function MockInterview() {
             </div>
 
             {isFinalQuestion ? (
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                <h3 className="font-semibold text-slate-900">Final question evaluated</h3>
-                <p className="mt-1 text-sm text-slate-600">
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/60">
+                <h3 className="font-semibold text-slate-900 dark:text-slate-100">Final question evaluated</h3>
+                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
                   Your mock interview is ready to finish. Save this attempt to the dashboard,
                   retry the interview, or review your overall summary.
                 </p>
@@ -490,7 +490,7 @@ export default function MockInterview() {
                     type="button"
                     onClick={saveSession}
                     disabled={savingSession || sessionSaved || scores.length === 0}
-                    className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-medium text-white disabled:cursor-not-allowed disabled:bg-slate-300"
+                    className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-medium text-white disabled:cursor-not-allowed disabled:bg-slate-300 dark:disabled:bg-slate-700 dark:bg-slate-100 dark:text-slate-900"
                   >
                     <Save className="h-4 w-4" />
                     {sessionSaved ? "Saved to dashboard" : savingSession ? "Saving..." : "Save to dashboard"}
@@ -498,7 +498,7 @@ export default function MockInterview() {
                   <button
                     type="button"
                     onClick={retryInterview}
-                    className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                    className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
                   >
                     <RotateCcw className="h-4 w-4" />
                     Retry mock interview
@@ -506,20 +506,20 @@ export default function MockInterview() {
                   <button
                     type="button"
                     onClick={nextQuestion}
-                    className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                    className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
                   >
                     Review summary
                   </button>
                   <button
                     type="button"
                     onClick={() => navigate(-1)}
-                    className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                    className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
                   >
                     <ArrowLeft className="h-4 w-4" />
                     Back
                   </button>
                 </div>
-                {saveMessage ? <p className="mt-3 text-sm text-slate-600">{saveMessage}</p> : null}
+                {saveMessage ? <p className="mt-3 text-sm text-slate-600 dark:text-slate-400">{saveMessage}</p> : null}
               </div>
             ) : (
               <button
@@ -535,7 +535,7 @@ export default function MockInterview() {
 
       <button
         onClick={() => window.history.back()}
-        className="absolute top-6 left-6 px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg"
+        className="absolute top-6 left-6 px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg dark:bg-slate-800 dark:hover:bg-slate-700"
       >
         ← Back
       </button>

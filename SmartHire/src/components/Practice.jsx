@@ -3,25 +3,25 @@ import { useNavigate } from "react-router-dom";
 
 const practiceAreas = [
   {
-    icon: <Code className="text-blue-600 w-5 h-5" />,
+    icon: <Code className="text-blue-600 w-5 h-5 dark:text-blue-400" />,
     title: "Technical",
     desc: "Coding, product sense & system design drills",
-    color: "text-blue-600",
-    bg: "bg-blue-100",
+    color: "text-blue-600 dark:text-blue-400",
+    bg: "bg-blue-100 dark:bg-blue-500/15",
   },
   {
-    icon: <Users className="text-purple-600 w-5 h-5" />,
+    icon: <Users className="text-purple-600 w-5 h-5 dark:text-purple-400" />,
     title: "Behavioral",
     desc: "STAR responses, teamwork & communication skills",
-    color: "text-purple-600",
-    bg: "bg-purple-100",
+    color: "text-purple-600 dark:text-purple-400",
+    bg: "bg-purple-100 dark:bg-purple-500/15",
   },
   {
-    icon: <Briefcase className="text-orange-600 w-5 h-5" />,
+    icon: <Briefcase className="text-orange-600 w-5 h-5 dark:text-orange-400" />,
     title: "Situational",
     desc: "Real-world scenarios & decision-making questions",
-    color: "text-orange-600",
-    bg: "bg-orange-100",
+    color: "text-orange-600 dark:text-orange-400",
+    bg: "bg-orange-100 dark:bg-orange-500/15",
   },
 ];
 
@@ -31,12 +31,12 @@ export default function Practice() {
   return (
     <section
       id="practice"
-      className="py-20 px-4 bg-gray-50 scroll-mt-24"
+      className="py-20 px-4 bg-gray-50 scroll-mt-24 dark:bg-slate-950"
     >
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-16">
-          <h2 className="text-3xl font-bold">Start Practicing Now</h2>
-          <p className="text-gray-600 mt-4">
+          <h2 className="text-3xl font-bold text-gray-900 dark:text-slate-100">Start Practicing Now</h2>
+          <p className="text-gray-600 mt-4 dark:text-slate-400">
             Select an interview category to begin a focused practice session.
           </p>
         </div>
@@ -48,7 +48,7 @@ export default function Practice() {
               onClick={() =>
                 navigate(`/practice/${area.title.toLowerCase()}/configure`)
               }
-              className="text-left bg-white p-6 rounded-xl shadow hover:shadow-xl transition"
+              className="text-left bg-white p-6 rounded-xl shadow hover:shadow-xl transition dark:bg-slate-900 dark:ring-1 dark:ring-slate-800"
             >
               <div
                 className={`w-10 h-10 ${area.bg} rounded-lg flex items-center justify-center mb-4`}
@@ -57,7 +57,7 @@ export default function Practice() {
               </div>
 
               <h3 className="font-bold text-lg">{area.title}</h3>
-              <p className="text-gray-600 text-sm mb-3">
+              <p className="text-gray-600 text-sm mb-3 dark:text-slate-400">
                 {area.desc}
               </p>
 

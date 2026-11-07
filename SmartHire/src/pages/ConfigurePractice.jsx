@@ -40,13 +40,13 @@ export default function ConfigurePractice() {
   };
 
   return (
-    <section className="min-h-screen bg-gray-50 py-20 px-4">
-      <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow p-8">
+    <section className="min-h-screen bg-gray-50 py-20 px-4 dark:bg-slate-950">
+      <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow p-8 dark:bg-slate-900">
         <h2 className="text-2xl font-bold mb-2">
           Configure Practice Set
         </h2>
 
-        <p className="text-gray-600 mb-8">
+        <p className="text-gray-600 mb-8 dark:text-slate-400">
           Category:
           <span className="font-semibold">
             {" "}
@@ -56,14 +56,14 @@ export default function ConfigurePractice() {
 
         {/* ⭐ Mode Selection */}
         <div className="mb-6">
-          <p className="text-sm text-gray-500 mb-2">Session Type</p>
+          <p className="text-sm text-gray-500 mb-2 dark:text-slate-400">Session Type</p>
           <div className="flex gap-3">
             <button
               onClick={() => setMode("practice")}
               className={`px-4 py-2 rounded-full border ${
                 mode === "practice"
                   ? "bg-green-600 text-white border-green-600"
-                  : "border-gray-300"
+                  : "border-gray-300 dark:border-slate-600"
               }`}
             >
               Practice
@@ -74,7 +74,7 @@ export default function ConfigurePractice() {
               className={`px-4 py-2 rounded-full border ${
                 mode === "mock"
                   ? "bg-purple-600 text-white border-purple-600"
-                  : "border-gray-300"
+                  : "border-gray-300 dark:border-slate-600"
               }`}
             >
               Mock Interview
@@ -86,7 +86,7 @@ export default function ConfigurePractice() {
        {/* Difficulty — only for Practice mode */}
 {mode === "practice" && !isBehavioral ? (
   <div className="mb-6">
-    <p className="text-sm text-gray-500 mb-2">Difficulty</p>
+    <p className="text-sm text-gray-500 mb-2 dark:text-slate-400">Difficulty</p>
     <div className="flex gap-3">
       {difficulties.map((level) => (
         <button
@@ -95,7 +95,7 @@ export default function ConfigurePractice() {
           className={`px-4 py-2 rounded-full border ${
             difficulty === level
               ? "bg-blue-600 text-white border-blue-600"
-              : "border-gray-300"
+              : "border-gray-300 dark:border-slate-600"
           }`}
         >
           {level}
@@ -108,7 +108,7 @@ export default function ConfigurePractice() {
         {/* Question Count */}
         {mode === "practice" && (
           <div className="mb-6">
-            <p className="text-sm text-gray-500 mb-2">
+            <p className="text-sm text-gray-500 mb-2 dark:text-slate-400">
               Number of Questions
             </p>
             <div className="flex gap-3">
@@ -118,8 +118,8 @@ export default function ConfigurePractice() {
                   onClick={() => setCount(q)}
                   className={`px-4 py-2 rounded-full border ${
                     count === q
-                      ? "bg-gray-900 text-white border-gray-900"
-                      : "border-gray-300"
+                      ? "bg-gray-900 text-white border-gray-900 dark:bg-slate-100 dark:text-slate-900 dark:border-slate-100"
+                      : "border-gray-300 dark:border-slate-600"
                   }`}
                 >
                   {q}
@@ -138,7 +138,7 @@ export default function ConfigurePractice() {
 
       <button
         onClick={() => window.history.back()}
-        className="absolute top-6 left-6 px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg"
+        className="absolute top-6 left-6 px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg dark:bg-slate-800 dark:hover:bg-slate-700"
       >
         ← Back
       </button>

@@ -157,14 +157,14 @@ export default function PracticeSession() {
   };
 
   return (
-    <section className="py-16 px-4 bg-gray-50 min-h-screen relative">
+    <section className="py-16 px-4 bg-gray-50 min-h-screen relative dark:bg-slate-950">
       <div className="max-w-4xl mx-auto space-y-6">
         <h2 className="text-2xl font-bold">
           {category} Practice Session
         </h2>
 
         {fetching && (
-          <p className="text-gray-500">Loading questions...</p>
+          <p className="text-gray-500 dark:text-slate-400">Loading questions...</p>
         )}
 
         {error && (
@@ -174,7 +174,7 @@ export default function PracticeSession() {
         )}
 
         {!fetching && !error && questions.length === 0 && (
-          <p className="text-gray-500">
+          <p className="text-gray-500 dark:text-slate-400">
             No questions found for this category.
           </p>
         )}
@@ -182,7 +182,7 @@ export default function PracticeSession() {
         {questions.map((q, index) => (
           <div
             key={q._id}
-            className="bg-white rounded-xl shadow p-6 space-y-4"
+            className="bg-white rounded-xl shadow p-6 space-y-4 dark:bg-slate-900"
           >
             <h3 className="font-semibold">
               Q{index + 1}. {q.question}
@@ -212,7 +212,7 @@ export default function PracticeSession() {
             </button>
 
             {evaluations[q._id] && (
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4 dark:bg-emerald-500/10 dark:border-emerald-500/30">
                 <p>
                   <strong>Score:</strong>{" "}
                   {evaluations[q._id].score}/10
@@ -248,7 +248,7 @@ export default function PracticeSession() {
               {saving ? "Saving..." : "Finish & Save Session"}
             </button>
             {saveMessage && (
-              <p className="mt-2 text-sm text-gray-600">{saveMessage}</p>
+              <p className="mt-2 text-sm text-gray-600 dark:text-slate-400">{saveMessage}</p>
             )}
           </div>
         )}
@@ -256,7 +256,7 @@ export default function PracticeSession() {
 
       <button
         onClick={() => navigate(-1)}
-        className="absolute top-6 left-6 px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg transition"
+        className="absolute top-6 left-6 px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg transition dark:bg-slate-800 dark:hover:bg-slate-700"
       >
         ← Back
       </button>
