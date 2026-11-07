@@ -1,7 +1,9 @@
 import OpenAI from "openai";
 import Question from "../models/questionModel.js";
 import { cleanQuestionText } from "../utils/questionExtractor.js";
-import { smartEvaluate } from "./smartEvaluator.js";
+import { analyzeAnswer, smartEvaluate } from "./smartEvaluator.js";
+import { getReferenceAnswer } from "../utils/referenceAnswers.js";
+import { isDatabaseConnected } from "../utils/database.js";
 import { applyEvaluationGuardrails } from "./evaluationGuardrails.js";
 import {
   evaluateWithPython,
@@ -48,10 +50,11 @@ const normalizeQuestionInput = (value) => {
   return cleaned || raw;
 };
 
+// Scores keep one decimal place (7.5/10) so small improvements are visible.
 const normalizeScore = (value) => {
   const n = Number(value);
   if (!Number.isFinite(n)) return null;
-  return Math.max(1, Math.min(10, Math.round(n)));
+  return Math.max(1, Math.min(10, Math.round(n * 10) / 10));
 };
 
 const defaultWeakness = "Add more specific details directly tied to the question.";
@@ -100,7 +103,8 @@ const parseEvaluationJson = (content) => {
 
 const loadQuestionContext = async (question, category) => {
   const cleanQuestion = normalizeQuestionInput(question);
-  if (!cleanQuestion) return null;
+  // Without a live connection Mongoose would buffer the query for seconds; skip it.
+  if (!cleanQuestion || !isDatabaseConnected()) return null;
 
   const questionRegex = new RegExp(`^${escapeRegex(cleanQuestion)}$`, "i");
   const normalizedCategory = normalizeCategory(category);
@@ -169,6 +173,7 @@ const buildPrompt = ({
     : [];
 
   const sampleAnswer = toStringOrFallback(questionContext?.sample_answer);
+  const referenceAnswer = toStringOrFallback(questionContext?.reference_answer);
 
   return `You are a strict interview evaluator.
 
@@ -184,6 +189,8 @@ Candidate answer:
 Question-specific context from dataset (if available):
 - Expected keywords: ${expectedKeywords.length ? expectedKeywords.join(", ") : "Not provided"}
 - Sample answer guidance: ${sampleAnswer || "Not provided"}
+- Reference answer (use it as the answer key, the candidate does not need to match its wording):
+${referenceAnswer ? referenceAnswer.slice(0, 1500) : "Not provided"}
 
 Evaluate ONLY against the asked question and context above.
 Hard constraints:
@@ -198,12 +205,39 @@ Primary weighting:
 
 Return STRICT JSON only:
 {
-  "score": number (1-10 integer),
-  "strengths": "short paragraph",
-  "weaknesses": "short paragraph",
-  "improvement": "specific action plan for next answer",
+  "score": number (1-10, one decimal place allowed),
+  "criteria": {
+    "relevance": number (0-10),
+    "depth": number (0-10),
+    "structure": number (0-10, for behavioral questions judge the STAR structure),
+    "clarity": number (0-10),
+    "examples": number (0-10)
+  },
+  "strengths": "1-2 sentences that quote what the candidate did well",
+  "weaknesses": "1-2 sentences naming the specific gaps or missing concepts",
+  "improvement": "one concrete action for the next answer",
   "overall_feedback": "concise overall judgment"
 }`;
+};
+
+const CRITERIA_LABELS = {
+  relevance: "Relevance",
+  depth: "Depth",
+  structure: "Structure",
+  clarity: "Clarity",
+  examples: "Examples",
+};
+
+// Prefer criteria scores from the AI model; otherwise use the engine's analysis.
+const pickCriteria = (rawCriteria, analysis) => {
+  if (rawCriteria && typeof rawCriteria === "object" && !Array.isArray(rawCriteria)) {
+    const fromModel = Object.keys(CRITERIA_LABELS)
+      .map((key) => ({ key, label: CRITERIA_LABELS[key], score: Number(rawCriteria[key]) }))
+      .filter((c) => Number.isFinite(c.score))
+      .map((c) => ({ ...c, score: Math.max(0, Math.min(10, Math.round(c.score * 10) / 10)) }));
+    if (fromModel.length >= 3) return fromModel;
+  }
+  return analysis?.criteria || [];
 };
 
 const finalizeEvaluation = ({
@@ -212,7 +246,10 @@ const finalizeEvaluation = ({
   model = null,
   question,
   answer,
+  category = "general",
   expectedKeywords = [],
+  referenceAnswer = "",
+  analysis = null,
   usedQuestionContext = false,
 }) => {
   const normalized = normalizeEvaluation(rawEvaluation);
@@ -222,12 +259,21 @@ const finalizeEvaluation = ({
     expectedKeywords,
   });
 
+  const details =
+    analysis ||
+    analyzeAnswer({ question, answer, category, referenceAnswer, expectedKeywords });
+
   return {
     ...guarded,
     feedback: guarded.overall_feedback,
+    criteria: pickCriteria(rawEvaluation?.criteria, details),
+    fillerWords: details.fillerWords,
+    missingConcepts: details.missingConcepts,
+    wordCount: details.wordCount,
+    referenceAnswer: referenceAnswer || null,
     source,
     model,
-    usedQuestionContext,
+    usedQuestionContext: usedQuestionContext || Boolean(referenceAnswer),
   };
 };
 
@@ -246,13 +292,30 @@ export const evaluateInterviewAnswer = async ({
     return {
       ...empty,
       feedback: empty.overall_feedback,
+      referenceAnswer: null,
       source: "smart-evaluator",
       usedQuestionContext: false,
     };
   }
 
-  const questionContext = await loadQuestionContext(safeQuestion, safeCategory);
+  let questionContext = null;
+  try {
+    questionContext = await loadQuestionContext(safeQuestion, safeCategory);
+  } catch (error) {
+    console.warn("Question context lookup failed:", error?.message || error);
+  }
   const expectedKeywords = questionContext?.expected_keywords || [];
+  const referenceAnswer =
+    getReferenceAnswer(safeQuestion) || toStringOrFallback(questionContext?.sample_answer);
+  const engineContext = { referenceAnswer, expectedKeywords };
+  const common = {
+    question: safeQuestion,
+    answer: safeAnswer,
+    category: safeCategory,
+    expectedKeywords,
+    referenceAnswer,
+    usedQuestionContext: Boolean(questionContext),
+  };
 
   if (isPythonEvaluatorEnabled()) {
     try {
@@ -262,7 +325,7 @@ export const evaluateInterviewAnswer = async ({
         category: safeCategory,
         mode,
         expectedKeywords,
-        sampleAnswer: questionContext?.sample_answer || "",
+        sampleAnswer: referenceAnswer || questionContext?.sample_answer || "",
         useAi: process.env.USE_AI === "true",
         openaiApiKey: process.env.OPENAI_API_KEY || "",
         model: DEFAULT_MODEL,
@@ -270,13 +333,10 @@ export const evaluateInterviewAnswer = async ({
 
       if (pythonResult && typeof pythonResult === "object") {
         return finalizeEvaluation({
+          ...common,
           rawEvaluation: pythonResult,
           source: pythonResult.source || "python-evaluator",
           model: pythonResult.model || null,
-          question: safeQuestion,
-          answer: safeAnswer,
-          expectedKeywords,
-          usedQuestionContext: Boolean(questionContext),
         });
       }
     } catch (pythonError) {
@@ -287,14 +347,12 @@ export const evaluateInterviewAnswer = async ({
   const client = getOpenAiClient();
 
   if (!client) {
-    const fallback = smartEvaluate(safeQuestion, safeAnswer, safeCategory);
+    const fallback = smartEvaluate(safeQuestion, safeAnswer, safeCategory, engineContext);
     return finalizeEvaluation({
+      ...common,
       rawEvaluation: fallback,
+      analysis: fallback,
       source: "smart-evaluator",
-      question: safeQuestion,
-      answer: safeAnswer,
-      expectedKeywords,
-      usedQuestionContext: Boolean(questionContext),
     });
   }
 
@@ -304,7 +362,7 @@ export const evaluateInterviewAnswer = async ({
       category: safeCategory,
       question: safeQuestion,
       answer: safeAnswer,
-      questionContext,
+      questionContext: { ...questionContext, reference_answer: referenceAnswer },
     });
 
     const completion = await client.chat.completions.create({
@@ -331,25 +389,20 @@ export const evaluateInterviewAnswer = async ({
     }
 
     return finalizeEvaluation({
+      ...common,
       rawEvaluation: parsed,
       source: "openai",
       model: DEFAULT_MODEL,
-      question: safeQuestion,
-      answer: safeAnswer,
-      expectedKeywords,
-      usedQuestionContext: Boolean(questionContext),
     });
   } catch (error) {
     console.error("AI evaluation failed. Falling back to smart evaluator:", error);
-    const fallback = smartEvaluate(safeQuestion, safeAnswer, safeCategory);
+    const fallback = smartEvaluate(safeQuestion, safeAnswer, safeCategory, engineContext);
 
     return finalizeEvaluation({
+      ...common,
       rawEvaluation: fallback,
+      analysis: fallback,
       source: "smart-evaluator",
-      question: safeQuestion,
-      answer: safeAnswer,
-      expectedKeywords,
-      usedQuestionContext: Boolean(questionContext),
     });
   }
 };

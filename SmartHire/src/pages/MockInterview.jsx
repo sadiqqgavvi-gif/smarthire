@@ -12,6 +12,7 @@ import {
   RotateCcw,
   Save,
   SkipForward,
+  Timer,
   Trophy,
   Volume2,
   VolumeX,
@@ -22,6 +23,21 @@ import AppHeader from "../components/app/AppHeader";
 import FeedbackPanel from "../components/app/FeedbackPanel";
 import { getTrack } from "../components/app/tracks";
 import { getScoreTone, toScore } from "../components/app/scoreTone";
+
+const formatTime = (seconds) => {
+  const safe = Math.max(0, Math.round(seconds));
+  return `${Math.floor(safe / 60)}:${String(safe % 60).padStart(2, "0")}`;
+};
+
+// Typical comfortable interview speaking pace.
+const PACE_RANGE = { min: 120, max: 160 };
+
+const describePace = (wpm) => {
+  if (!wpm) return null;
+  if (wpm < PACE_RANGE.min) return { label: "A little slow", tone: "text-amber-600 dark:text-amber-400" };
+  if (wpm > PACE_RANGE.max) return { label: "A little fast", tone: "text-amber-600 dark:text-amber-400" };
+  return { label: "Good pace", tone: "text-emerald-600 dark:text-emerald-400" };
+};
 
 const secondaryButton =
   "inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800";
@@ -57,9 +73,41 @@ export default function MockInterview() {
   const [speaking, setSpeaking] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
 
+  const [elapsed, setElapsed] = useState(0);
+  const [answerStats, setAnswerStats] = useState(null); // { seconds, wpm } for the evaluated answer
+
   const recognitionRef = useRef(null);
+  const questionStartRef = useRef(Date.now());
+  const voiceStartRef = useRef(null);
+  const voiceSecondsRef = useRef(0);
+  const voiceWordsRef = useRef(0);
+
+  const finishVoiceSegment = () => {
+    if (voiceStartRef.current) {
+      voiceSecondsRef.current += (Date.now() - voiceStartRef.current) / 1000;
+      voiceStartRef.current = null;
+    }
+  };
 
   const scores = results.map((r) => r.score).filter((s) => s !== null);
+
+  /* Per-question timer: restarts for each question and stops once feedback arrives */
+  useEffect(() => {
+    questionStartRef.current = Date.now();
+    voiceSecondsRef.current = 0;
+    voiceWordsRef.current = 0;
+    voiceStartRef.current = null;
+    setElapsed(0);
+    setAnswerStats(null);
+  }, [current, questions.length]);
+
+  useEffect(() => {
+    if (loading || feedback || current >= questions.length) return undefined;
+    const id = setInterval(() => {
+      setElapsed((Date.now() - questionStartRef.current) / 1000);
+    }, 1000);
+    return () => clearInterval(id);
+  }, [loading, feedback, current, questions.length]);
 
   /* Load questions */
   useEffect(() => {
@@ -119,6 +167,7 @@ export default function MockInterview() {
       }
 
       if (finalText.trim()) {
+        voiceWordsRef.current += finalText.trim().split(/\s+/).length;
         setAnswer((prev) => {
           const separator = prev.trim() ? " " : "";
           return `${prev}${separator}${finalText.trim()}`;
@@ -129,6 +178,7 @@ export default function MockInterview() {
     };
 
     recognition.onerror = (event) => {
+      finishVoiceSegment();
       setListening(false);
       setInterimTranscript("");
       setVoiceMessage(
@@ -139,6 +189,7 @@ export default function MockInterview() {
     };
 
     recognition.onend = () => {
+      finishVoiceSegment();
       setListening(false);
       setInterimTranscript("");
     };
@@ -169,6 +220,7 @@ export default function MockInterview() {
       setVoiceMessage("");
       setInterimTranscript("");
       recognitionRef.current.start();
+      voiceStartRef.current = Date.now();
       setListening(true);
     } catch {
       setVoiceMessage("Voice capture is already running.");
@@ -177,6 +229,7 @@ export default function MockInterview() {
 
   const stopListening = () => {
     if (!recognitionRef.current) return;
+    finishVoiceSegment();
     recognitionRef.current.stop();
     setListening(false);
     setInterimTranscript("");
@@ -224,10 +277,23 @@ export default function MockInterview() {
         throw new Error(data?.error?.message || data?.message || "Evaluation unavailable");
       }
 
+      const seconds = (Date.now() - questionStartRef.current) / 1000;
+      // Pace only makes sense when enough of the answer was spoken.
+      const wpm =
+        voiceSecondsRef.current >= 8 && voiceWordsRef.current >= 15
+          ? Math.round(voiceWordsRef.current / (voiceSecondsRef.current / 60))
+          : null;
+      setAnswerStats({ seconds, wpm });
       setFeedback(data.evaluation);
       setResults((prev) => [
         ...prev,
-        { question: questions[current]?.question, score: toScore(data.evaluation.score), skipped: false },
+        {
+          question: questions[current]?.question,
+          score: toScore(data.evaluation.score),
+          skipped: false,
+          seconds,
+          wpm,
+        },
       ]);
     } catch (err) {
       console.error("Evaluation error", err);
@@ -251,7 +317,10 @@ export default function MockInterview() {
   };
 
   const skipQuestion = () => {
-    setResults((prev) => [...prev, { question: questions[current]?.question, score: null, skipped: true }]);
+    setResults((prev) => [
+      ...prev,
+      { question: questions[current]?.question, score: null, skipped: true, seconds: null, wpm: null },
+    ]);
     goToNext();
   };
 
@@ -428,6 +497,33 @@ export default function MockInterview() {
             </div>
           </div>
 
+          {(() => {
+            const timed = results.filter((r) => Number.isFinite(r.seconds));
+            const paced = results.filter((r) => r.wpm);
+            if (!timed.length) return null;
+            const avgTime = timed.reduce((sum, r) => sum + r.seconds, 0) / timed.length;
+            const avgPace = paced.length
+              ? Math.round(paced.reduce((sum, r) => sum + r.wpm, 0) / paced.length)
+              : null;
+            return (
+              <div className="flex flex-wrap justify-center gap-3 px-6 pb-6 text-sm sm:px-8">
+                <span className="inline-flex items-center gap-2 rounded-xl bg-slate-100 px-3 py-2 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                  <Timer className="h-4 w-4 text-slate-400" />
+                  Average answer time <strong>{formatTime(avgTime)}</strong>
+                </span>
+                {avgPace ? (
+                  <span className="inline-flex items-center gap-2 rounded-xl bg-slate-100 px-3 py-2 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                    <Mic className="h-4 w-4 text-slate-400" />
+                    Average speaking pace <strong>{avgPace} wpm</strong>
+                    <span className={`text-xs font-semibold ${describePace(avgPace).tone}`}>
+                      {describePace(avgPace).label}
+                    </span>
+                  </span>
+                ) : null}
+              </div>
+            );
+          })()}
+
           {results.length ? (
             <div className="border-t border-slate-200 px-6 py-6 sm:px-8 dark:border-slate-800">
               <h2 className="font-semibold text-slate-900 dark:text-white">Question breakdown</h2>
@@ -499,7 +595,18 @@ export default function MockInterview() {
           <span>
             Question {current + 1} of {questions.length}
           </span>
-          <span className="text-slate-400">{progress}% complete</span>
+          <span className="flex items-center gap-3">
+            <span
+              className={`inline-flex items-center gap-1.5 tabular-nums ${
+                elapsed > 150 ? "text-amber-600 dark:text-amber-400" : "text-slate-500 dark:text-slate-400"
+              }`}
+              title="Time on this question. Aim for 1 to 2 minutes."
+            >
+              <Timer className="h-4 w-4" />
+              {formatTime(answerStats ? answerStats.seconds : elapsed)}
+            </span>
+            <span className="text-slate-400">{progress}% complete</span>
+          </span>
         </div>
         <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
           <div
@@ -637,7 +744,27 @@ export default function MockInterview() {
           </div>
         ) : (
           <div className="mt-6 space-y-5">
+            {answerStats ? (
+              <div className="flex flex-wrap gap-3 text-sm">
+                <span className="inline-flex items-center gap-2 rounded-xl bg-slate-100 px-3 py-2 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                  <Timer className="h-4 w-4 text-slate-400" />
+                  Answer time <strong>{formatTime(answerStats.seconds)}</strong>
+                  <span className="text-xs text-slate-400">(aim for 1–2 min)</span>
+                </span>
+                {answerStats.wpm ? (
+                  <span className="inline-flex items-center gap-2 rounded-xl bg-slate-100 px-3 py-2 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                    <Mic className="h-4 w-4 text-slate-400" />
+                    Speaking pace <strong>{answerStats.wpm} wpm</strong>
+                    <span className={`text-xs font-semibold ${describePace(answerStats.wpm).tone}`}>
+                      {describePace(answerStats.wpm).label}
+                    </span>
+                  </span>
+                ) : null}
+              </div>
+            ) : null}
+
             <FeedbackPanel
+              category={type}
               evaluation={feedback}
               action={
                 <button
