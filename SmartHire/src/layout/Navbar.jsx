@@ -93,12 +93,6 @@ export default function Navbar() {
             ) : (
               <>
                 <Link
-                  to="/login"
-                  className="px-4 py-2 text-gray-700 rounded-md hover:bg-gray-100 dark:text-slate-300 dark:hover:bg-slate-800 "
-                >
-                  Log in
-                </Link>
-                <Link
                   to="/signup"
                   className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
                 >
@@ -159,7 +153,7 @@ export default function Navbar() {
               Contact
             </a>
 
-            {/* Mobile Log in / Get started */}
+            {/* Mobile: one entry point for sign up and log in */}
             {isAuthenticated ? (
               <>
                 <Link
@@ -179,13 +173,6 @@ export default function Navbar() {
               </>
             ) : (
               <>
-                <Link
-                  to="/login"
-                  className="text-gray-700 px-3 py-2 rounded-md hover:bg-gray-100 dark:text-slate-300 dark:hover:bg-slate-800"
-                  onClick={() => setMenuOpen(false)}
-                >
-                  Log in
-                </Link>
                 <Link
                   to="/signup"
                   className="bg-blue-600 text-white px-3 py-2 rounded-md hover:bg-blue-700"

@@ -136,3 +136,27 @@ describe("Signup page", () => {
     expect(payload).toEqual({ name: "Ali Khan", email: "new@example.com", password: "abc12345" });
   });
 });
+
+describe("Get started page tabs", () => {
+  test("switches between the sign up and log in tabs", async () => {
+    authFetch.mockResolvedValue({ ok: false });
+
+    render(
+      <MemoryRouter initialEntries={["/signup"]}>
+        <Routes>
+          <Route path="/signup" element={<Auth type="signup" />} />
+          <Route path="/login" element={<Auth type="login" />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    expect(screen.getByRole("tab", { name: /sign up/i })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("button", { name: /create account/i })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("tab", { name: /log in/i }));
+
+    expect(await screen.findByRole("button", { name: /^log in$/i })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /log in/i })).toHaveAttribute("aria-selected", "true");
+    expect(screen.queryByPlaceholderText(/re-enter your password/i)).not.toBeInTheDocument();
+  });
+});
