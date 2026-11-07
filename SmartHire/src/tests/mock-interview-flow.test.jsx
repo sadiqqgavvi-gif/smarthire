@@ -189,4 +189,49 @@ describe("MockInterview flow", () => {
       "Closures keep access to outer variables."
     );
   });
+  test("shows an honest error instead of made-up feedback when evaluation fails", async () => {
+    fetchMock.mockImplementation(async (url) => {
+      if (String(url).includes("/api/practice/technical")) {
+        return mockJsonResponse({
+          questions: [{ _id: "q1", question: "What is a JavaScript closure?" }],
+        });
+      }
+      return mockJsonResponse({ success: false, message: "AI unavailable" }, false, 500);
+    });
+
+    render(
+      <MemoryRouter initialEntries={["/mock-interview/technical?count=1&difficulty=easy"]}>
+        <Routes>
+          <Route path="/mock-interview/:type" element={<MockInterview />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    await screen.findByText(/what is a javascript closure\?/i);
+    await userEvent.type(screen.getByPlaceholderText(/speak naturally/i), "A closure keeps outer scope.");
+    await userEvent.click(screen.getByRole("button", { name: /submit answer/i }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(/couldn't evaluate this answer/i);
+    expect(screen.queryByText(/ai feedback/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/good clarity/i)).not.toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/speak naturally/i)).toHaveValue("A closure keeps outer scope.");
+  });
+
+  test("lets the user skip a question and shows it in the summary", async () => {
+    render(
+      <MemoryRouter initialEntries={["/mock-interview/technical?count=1&difficulty=easy"]}>
+        <Routes>
+          <Route path="/mock-interview/:type" element={<MockInterview />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    await screen.findByText(/what is a javascript closure\?/i);
+    await userEvent.click(screen.getByRole("button", { name: /skip question/i }));
+
+    expect(await screen.findByText(/mock interview complete/i)).toBeInTheDocument();
+    expect(screen.getByText(/you answered 0 of 1 questions/i)).toBeInTheDocument();
+    expect(screen.getByText("Skipped")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /save to dashboard/i })).toBeDisabled();
+  });
 });

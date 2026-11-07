@@ -123,4 +123,35 @@ describe("Dashboard", () => {
 
     expect(screen.queryByText(/practice and mock sessions recorded in the dashboard/i)).not.toBeInTheDocument();
   });
+  test("lists saved sessions in the session history table", async () => {
+    render(
+      <MemoryRouter initialEntries={["/dashboard"]}>
+        <Routes>
+          <Route path="/dashboard" element={<Dashboard />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByText(/session history/i)).toBeInTheDocument();
+    expect(screen.getByText("8.0/10")).toBeInTheDocument();
+    expect(screen.getByText("6.0/10")).toBeInTheDocument();
+    // Overall score uses the exact average (7/10), not a rounded value.
+    expect(screen.getAllByText("70%").length).toBeGreaterThan(0);
+  });
+
+  test("invites new users to start their first session", async () => {
+    authFetchMock.mockResolvedValue(
+      mockJsonResponse({ stats: { overallScore: 0, totalSessions: 0, completedInterviews: 0 }, sessions: [] })
+    );
+
+    render(
+      <MemoryRouter initialEntries={["/dashboard"]}>
+        <Routes>
+          <Route path="/dashboard" element={<Dashboard />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByText(/start your first session/i)).toBeInTheDocument();
+  });
 });
