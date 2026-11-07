@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
+  Area,
+  AreaChart,
   BarChart,
   Bar,
   XAxis,
@@ -17,12 +19,14 @@ import {
   BookOpenCheck,
   LogOut,
   Sparkles,
+  Flame,
 } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { authFetch, logoutUser } from "../utils/authFetch";
 import { API_BASE_URL } from "../utils/apiBaseUrl";
 import AppHeader from "../components/app/AppHeader";
 import { getScoreTone } from "../components/app/scoreTone";
+import { computeStreak } from "../utils/sessionStats";
 import { useTheme } from "../theme/themeContext";
 
 const scoreToPercent = (value) => `${Math.round((Number(value) || 0) * 10)}%`;
@@ -32,6 +36,18 @@ const formatLabel = (value = "") =>
     .split("-")
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ");
+
+// Oldest to newest, so the chart reads left to right.
+const buildTrend = (sessions = []) =>
+  sessions
+    .filter((s) => s?.createdAt && !Number.isNaN(new Date(s.createdAt).getTime()))
+    .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
+    .slice(-12)
+    .map((s) => ({
+      name: new Date(s.createdAt).toLocaleDateString(undefined, { day: "numeric", month: "short" }),
+      score: Math.round((Number(s?.averageScore) || 0) * 10),
+      type: s?.mode === "mock" ? "Mock" : "Practice",
+    }));
 
 const buildCategoryScores = (sessions = []) => {
   const grouped = new Map();
@@ -279,6 +295,8 @@ export default function Dashboard() {
   const totalSessionCount = sessions.length || stats.totalSessions;
   const mockSessionCount = sessions.length ? mockSessions.length : stats.completedInterviews;
 
+  const streak = useMemo(() => computeStreak(sessions), [sessions]);
+
   const historySessions =
     activeView === "mock" ? mockSessions : activeView === "practice" ? practiceSessions : sessions;
 
@@ -400,7 +418,7 @@ export default function Dashboard() {
         </div>
 
         {activeView === "overview" ? (
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
             <StatCard
               icon={TrendingUp}
               title="Overall score"
@@ -418,6 +436,12 @@ export default function Dashboard() {
               title="Mock interviews"
               value={mockSessionCount}
               description="Completed mock sessions available for review."
+            />
+            <StatCard
+              icon={Flame}
+              title="Practice streak"
+              value={`${streak} ${streak === 1 ? "day" : "days"}`}
+              description={streak ? "Keep it going: practice again tomorrow." : "Save a session today to start a streak."}
             />
           </div>
         ) : null}
@@ -558,6 +582,48 @@ export default function Dashboard() {
             )}
           </div>
         </div>
+
+        {!loading && buildTrend(historySessions).length >= 2 ? (
+          <div className="mt-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <h2 className="text-lg font-semibold tracking-tight text-slate-900 dark:text-white">Progress over time</h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400">Score of each saved session, oldest to newest.</p>
+            <div className="mt-4 h-[240px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={buildTrend(historySessions)} margin={{ left: -10, right: 10 }}>
+                  <defs>
+                    <linearGradient id="trendFill" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor={chartColors.bar} stopOpacity={0.35} />
+                      <stop offset="100%" stopColor={chartColors.bar} stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} vertical={false} />
+                  <XAxis dataKey="name" tickLine={false} axisLine={false} tick={{ fill: chartColors.tick, fontSize: 12 }} />
+                  <YAxis domain={[0, 100]} tickLine={false} axisLine={false} tick={{ fill: chartColors.tick, fontSize: 12 }} />
+                  <Tooltip
+                    contentStyle={{
+                      borderRadius: "12px",
+                      border: `1px solid ${chartColors.tooltipBorder}`,
+                      background: chartColors.tooltipBg,
+                      color: chartColors.tooltipText,
+                    }}
+                    labelStyle={{ color: chartColors.tooltipText }}
+                    itemStyle={{ color: chartColors.tooltipText }}
+                    formatter={(value, _name, item) => [`${value}%`, item?.payload?.type || "Score"]}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="score"
+                    stroke={chartColors.bar}
+                    strokeWidth={2.5}
+                    fill="url(#trendFill)"
+                    dot={{ r: 4, fill: chartColors.bar, strokeWidth: 0 }}
+                    activeDot={{ r: 6 }}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        ) : null}
 
         {!loading ? <SessionHistory sessions={historySessions} /> : null}
       </main>

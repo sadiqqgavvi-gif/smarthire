@@ -5,6 +5,8 @@ import Hero from "./components/Hero";
 import Features from "./components/Features";
 import Practice from "./components/Practice";
 import FAQ from "./components/FAQ";
+import TopicMarquee from "./components/TopicMarquee";
+import FinalCTA from "./components/FinalCTA";
 import Contact from "./components/Contact";
 import Footer from "./layout/Footer";
 
@@ -27,10 +29,12 @@ export default function App() {
             <>
               <Navbar />
               <Hero />
+              <TopicMarquee />
               <Features />
               <Practice />
               <FAQ />
               <Contact />
+              <FinalCTA />
               <Footer />
             </>
           }

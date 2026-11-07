@@ -6,6 +6,8 @@ import Dashboard from "../pages/Dashboard";
 
 vi.mock("recharts", () => ({
   BarChart: ({ children }) => <div data-testid="barchart">{children}</div>,
+  AreaChart: ({ children }) => <div data-testid="areachart">{children}</div>,
+  Area: () => <div data-testid="area" />,
   Bar: () => <div data-testid="bar" />,
   XAxis: () => <div data-testid="xaxis" />,
   YAxis: () => <div data-testid="yaxis" />,

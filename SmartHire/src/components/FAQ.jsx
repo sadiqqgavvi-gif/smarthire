@@ -1,6 +1,7 @@
 // src/components/FAQ.jsx
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
+import Reveal from "./motion/Reveal";
 
 const FAQS = [
   {
@@ -44,7 +45,7 @@ export default function FAQ() {
       className="scroll-mt-20 bg-slate-50 px-4 py-24 sm:px-6 lg:px-8 dark:bg-slate-900/60"
     >
       <div className="mx-auto grid max-w-7xl gap-12 lg:grid-cols-[0.8fr_1.2fr]">
-        <div>
+        <Reveal>
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-600 dark:text-blue-400">
             FAQ
           </p>
@@ -58,9 +59,9 @@ export default function FAQ() {
             </a>
             .
           </p>
-        </div>
+        </Reveal>
 
-        <dl className="space-y-3">
+        <Reveal as="dl" delay={120} className="space-y-3">
           {FAQS.map((item, index) => {
             const isOpen = openIndex === index;
             const panelId = `faq-panel-${index}`;
@@ -101,7 +102,7 @@ export default function FAQ() {
               </div>
             );
           })}
-        </dl>
+        </Reveal>
       </div>
     </section>
   );
