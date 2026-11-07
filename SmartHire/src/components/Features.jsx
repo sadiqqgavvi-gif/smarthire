@@ -4,33 +4,33 @@ import { Mic, BarChart2, Book } from "lucide-react";
 export default function Features() {
   const features = [
     {
-      icon: <Mic className="text-blue-600 w-6 h-6" />,
+      icon: <Mic className="text-blue-600 w-6 h-6 dark:text-blue-400" />,
       title: "Mock Interviews",
       text: "Practice with AI that asks real interview questions and evaluates your responses in real-time.",
-      // button: { label: "Try now →", color: "text-blue-600" },
+      // button: { label: "Try now →", color: "text-blue-600 dark:text-blue-400" },
     },
     {
-      icon: <BarChart2 className="text-purple-600 w-6 h-6" />,
+      icon: <BarChart2 className="text-purple-600 w-6 h-6 dark:text-purple-400" />,
       title: "Performance Analysis",
       text: "Get detailed feedback on your speaking pace, word choice, confidence level, and more.",
-      // button: { label: "Learn more →", color: "text-purple-600" },
+      // button: { label: "Learn more →", color: "text-purple-600 dark:text-purple-400" },
     },
     {
-      icon: <Book className="text-blue-600 w-6 h-6" />,
+      icon: <Book className="text-blue-600 w-6 h-6 dark:text-blue-400" />,
       title: "Company-Specific Prep",
       text: "Access tailored questions and insights for over 5,000 companies worldwide.",
-      // button: { label: "Explore →", color: "text-blue-600" },
+      // button: { label: "Explore →", color: "text-blue-600 dark:text-blue-400" },
     },
   ];
 
   return (
-    <section id="features" className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
+    <section id="features" className="py-20 px-4 sm:px-6 lg:px-8 bg-white dark:bg-slate-900">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-16">
-          <h2 className="text-3xl font-bold text-gray-900">
+          <h2 className="text-3xl font-bold text-gray-900 dark:text-slate-100">
             How SmartHire Helps You Succeed
           </h2>
-          <p className="text-gray-600 mt-4 max-w-2xl mx-auto">
+          <p className="text-gray-600 mt-4 max-w-2xl mx-auto dark:text-slate-400">
             Our AI-powered platform provides comprehensive tools to prepare you for any interview scenario.
           </p>
         </div>
@@ -39,13 +39,13 @@ export default function Features() {
           {features.map((f, index) => (
             <div
               key={index}
-              className="bg-gray-100 rounded-xl p-8 transition-transform duration-200 hover:shadow-lg hover:scale-105 cursor-pointer"
+              className="bg-gray-100 rounded-xl p-8 transition-transform duration-200 hover:shadow-lg hover:scale-105 cursor-pointer dark:bg-slate-800"
             >
-              <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center mb-6">
+              <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center mb-6 dark:bg-blue-500/10">
                 {f.icon}
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">{f.title}</h3>
-              <p className="text-gray-600 mb-4">{f.text}</p>
+              <h3 className="text-xl font-bold text-gray-900 mb-3 dark:text-slate-100">{f.title}</h3>
+              <p className="text-gray-600 mb-4 dark:text-slate-400">{f.text}</p>
               {f.button ? (
                 <button
                   className={`${f.button.color} font-medium hover:underline`}

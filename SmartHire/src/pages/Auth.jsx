@@ -8,10 +8,15 @@ import {
   UserPlus,
   LockKeyhole,
   Mail,
+  Loader2,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { authFetch, logoutUser } from "../utils/authFetch";
 import { API_BASE_URL } from "../utils/apiBaseUrl";
+import { setAccessToken } from "../utils/authToken";
+import { getAuthErrorMessage } from "../utils/authErrors";
+import ThemeToggle from "../components/ThemeToggle";
+import { useTheme } from "../theme/themeContext";
 
 const GOOGLE_SIGN_IN_SCRIPT_ID = "google-sign-in-script";
 
@@ -21,6 +26,14 @@ export default function Auth({ type }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [googleReady, setGoogleReady] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [messageType, setMessageType] = useState("info");
+  const { isDark } = useTheme();
+
+  const showMessage = (text, kind = "info") => {
+    setMessage(text);
+    setMessageType(kind);
+  };
 
   const googleButtonRef = useRef(null);
   const navigate = useNavigate();
@@ -30,6 +43,7 @@ export default function Auth({ type }) {
     let isMounted = true;
 
     setForm({ email: "", password: "" });
+    setMessage("");
 
     const checkAuth = async () => {
       try {
@@ -70,7 +84,7 @@ export default function Auth({ type }) {
         client_id: googleClientId,
         callback: async (response) => {
           if (!response?.credential) {
-            setMessage("Google sign-in did not return a valid credential.");
+            showMessage("Google sign-in did not return a valid credential.", "error");
             return;
           }
 
@@ -84,7 +98,8 @@ export default function Auth({ type }) {
               { withCredentials: true }
             );
 
-            setMessage(res.data.message || "Google login successful");
+            setAccessToken(res.data?.accessToken);
+            showMessage(res.data?.message || "Google login successful", "success");
             const verifyRes = await authFetch(`${API_BASE_URL}/api/auth/me`);
 
             if (!verifyRes.ok) {
@@ -93,16 +108,16 @@ export default function Auth({ type }) {
 
             navigate("/", { replace: true });
           } catch (err) {
-            const apiMessage = err.response?.data?.error?.message || err.response?.data?.message;
-            setMessage(apiMessage || err.message || "Google login failed");
+            showMessage(getAuthErrorMessage(err, "Google login failed"), "error");
           } finally {
             setGoogleLoading(false);
           }
         },
       });
 
+      googleButtonRef.current.innerHTML = "";
       window.google.accounts.id.renderButton(googleButtonRef.current, {
-        theme: "outline",
+        theme: isDark ? "filled_black" : "outline",
         size: "large",
         width: googleButtonRef.current.clientWidth || 320,
         shape: "pill",
@@ -137,7 +152,7 @@ export default function Auth({ type }) {
     script.onload = mountGoogleButton;
     script.onerror = () => {
       if (!cancelled) {
-        setMessage("Google sign-in could not be loaded right now.");
+        showMessage("Google sign-in could not be loaded right now.", "error");
       }
     };
     document.head.appendChild(script);
@@ -145,14 +160,14 @@ export default function Auth({ type }) {
     return () => {
       cancelled = true;
     };
-  }, [googleClientId, navigate, type]);
+  }, [googleClientId, navigate, type, isDark]);
 
   const handleLogout = async () => {
     try {
       await logoutUser();
-      setMessage("Logged out successfully");
+      showMessage("Logged out successfully", "success");
     } catch {
-      setMessage("Logout failed");
+      showMessage("Logout failed", "error");
     } finally {
       setIsAuthenticated(false);
       setForm({ email: "", password: "" });
@@ -169,7 +184,7 @@ export default function Auth({ type }) {
   };
 
   const verifySessionAndRedirect = async (successMessage, redirectTo) => {
-    setMessage(successMessage);
+    showMessage(successMessage, "success");
     const verifyRes = await authFetch(`${API_BASE_URL}/api/auth/me`);
 
     if (!verifyRes.ok) {
@@ -181,46 +196,78 @@ export default function Auth({ type }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (submitting) return;
+
+    const email = form.email.trim();
+    const { password } = form;
+
+    if (!email || !password) {
+      showMessage("Please enter both email and password.", "error");
+      return;
+    }
+
+    if (password.length < 6) {
+      showMessage("Password must be at least 6 characters.", "error");
+      return;
+    }
 
     try {
+      setSubmitting(true);
+      setMessage("");
+
       const url =
         type === "login"
           ? `${API_BASE_URL}/api/auth/login`
           : `${API_BASE_URL}/api/auth/register`;
 
-      const res = await axios.post(url, form, { withCredentials: true });
+      const res = await axios.post(url, { email, password }, { withCredentials: true });
+      setAccessToken(res.data?.accessToken);
+
+      // Registration also signs the user in, so both flows land on the home page.
       await verifySessionAndRedirect(
-        res.data.message,
-        type === "login" ? "/" : "/login"
+        res.data?.message || (type === "login" ? "Login successful" : "Registration successful"),
+        "/"
       );
     } catch (err) {
-      const apiMessage = err.response?.data?.error?.message || err.response?.data?.message;
-      setMessage(apiMessage || err.message || "Something went wrong");
+      showMessage(getAuthErrorMessage(err), "error");
+    } finally {
+      setSubmitting(false);
     }
   };
 
+  const messageStyles = {
+    error:
+      "border-red-200 bg-red-50 text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300",
+    success:
+      "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300",
+    info: "border-slate-200 bg-slate-50 text-slate-600 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-400",
+  };
+
   return (
-    <div className="min-h-screen bg-slate-100 px-4 py-8 text-slate-900">
+    <div className="min-h-screen bg-slate-100 px-4 py-8 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
       <button
         onClick={handleBack}
-        className="absolute left-6 top-6 inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+        className="absolute left-6 top-6 inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
       >
         <ArrowLeft className="h-4 w-4" />
         Back
       </button>
 
-      {isAuthenticated ? (
-        <button
-          onClick={handleLogout}
-          className="absolute right-6 top-6 inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
-        >
-          <LogOut className="h-4 w-4" />
-          Logout
-        </button>
-      ) : null}
+      <div className="absolute right-6 top-6 flex items-center gap-2">
+        <ThemeToggle />
+        {isAuthenticated ? (
+          <button
+            onClick={handleLogout}
+            className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white"
+          >
+            <LogOut className="h-4 w-4" />
+            Logout
+          </button>
+        ) : null}
+      </div>
 
       <div className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-6xl items-center justify-center">
-        <div className="grid w-full overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_20px_80px_rgba(15,23,42,0.12)] lg:grid-cols-[1.05fr_0.95fr]">
+        <div className="grid w-full overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_20px_80px_rgba(15,23,42,0.12)] lg:grid-cols-[1.05fr_0.95fr] dark:border-slate-700 dark:bg-slate-900">
           <div className="hidden flex-col justify-between bg-slate-950 p-10 text-white lg:flex">
             <div>
               <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm text-slate-200">
@@ -245,10 +292,10 @@ export default function Auth({ type }) {
 
           <div className="p-8 sm:p-10">
             <div className="mb-8">
-              <h2 className="text-3xl font-semibold tracking-tight text-slate-900">
+              <h2 className="text-3xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
                 {type === "login" ? "Login to SmartHire" : "Create Your SmartHire Account"}
               </h2>
-              <p className="mt-2 text-sm text-slate-500">
+              <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
                 {type === "login"
                   ? "Use your email and password, or continue with Google."
                   : "Create a new account with email and password."}
@@ -257,79 +304,88 @@ export default function Auth({ type }) {
 
             {type === "login" ? (
               <div className="mb-6">
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/60">
                   {googleClientId ? (
                     <>
                       <div ref={googleButtonRef} className="min-h-[44px]" />
                       {googleLoading ? (
-                        <p className="mt-3 text-xs text-slate-500">Signing you in with Google...</p>
+                        <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">Signing you in with Google...</p>
                       ) : !googleReady ? (
-                        <p className="mt-3 text-xs text-slate-500">Preparing Google sign-in...</p>
+                        <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">Preparing Google sign-in...</p>
                       ) : null}
                     </>
                   ) : (
                     <button
                       type="button"
                       disabled
-                      className="inline-flex w-full items-center justify-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-400"
+                      className="inline-flex w-full items-center justify-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-400 dark:border-slate-700 dark:bg-slate-900"
                     >
                       <Chrome className="h-4 w-4" />
                       Continue with Google
                     </button>
                   )}
                   {!googleClientId ? (
-                    <p className="mt-3 text-xs text-slate-500">
+                    <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
                       Google sign-in will appear once `VITE_GOOGLE_CLIENT_ID` is configured.
                     </p>
                   ) : null}
                 </div>
 
                 <div className="my-6 flex items-center gap-3">
-                  <div className="h-px flex-1 bg-slate-200" />
+                  <div className="h-px flex-1 bg-slate-200 dark:bg-slate-700" />
                   <span className="text-xs font-medium uppercase tracking-[0.2em] text-slate-400">
                     or
                   </span>
-                  <div className="h-px flex-1 bg-slate-200" />
+                  <div className="h-px flex-1 bg-slate-200 dark:bg-slate-700" />
                 </div>
               </div>
             ) : null}
 
             <form onSubmit={handleSubmit} autoComplete="off" className="space-y-4">
               <label className="block">
-                <span className="mb-2 block text-sm font-medium text-slate-700">Email</span>
-                <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 focus-within:border-slate-400">
+                <span className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">Email</span>
+                <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 focus-within:border-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:focus-within:border-slate-500">
                   <Mail className="h-4 w-4 text-slate-400" />
                   <input
                     type="email"
                     placeholder="Email"
                     value={form.email}
+                    required
                     autoComplete="email"
                     onChange={(e) => setForm({ ...form, email: e.target.value })}
-                    className="w-full bg-transparent outline-none placeholder:text-slate-400"
+                    className="w-full bg-transparent outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
                   />
                 </div>
               </label>
 
               <label className="block">
-                <span className="mb-2 block text-sm font-medium text-slate-700">Password</span>
-                <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 focus-within:border-slate-400">
+                <span className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">Password</span>
+                <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 focus-within:border-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:focus-within:border-slate-500">
                   <LockKeyhole className="h-4 w-4 text-slate-400" />
                   <input
                     type="password"
                     placeholder="Password"
                     value={form.password}
+                    required
+                    minLength={6}
                     autoComplete={type === "login" ? "current-password" : "new-password"}
                     onChange={(e) => setForm({ ...form, password: e.target.value })}
-                    className="w-full bg-transparent outline-none placeholder:text-slate-400"
+                    className="w-full bg-transparent outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
                   />
                 </div>
               </label>
 
               <button
                 type="submit"
-                className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+                disabled={submitting}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-70 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white"
               >
-                {type === "login" ? (
+                {submitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    {type === "login" ? "Logging in..." : "Creating account..."}
+                  </>
+                ) : type === "login" ? (
                   <>
                     <LogIn className="h-4 w-4" />
                     Login
@@ -343,8 +399,21 @@ export default function Auth({ type }) {
               </button>
             </form>
 
+            <p className="mt-4 text-center text-sm text-slate-500 dark:text-slate-400">
+              {type === "login" ? "Don't have an account? " : "Already have an account? "}
+              <Link
+                to={type === "login" ? "/signup" : "/login"}
+                className="font-semibold text-slate-900 hover:underline dark:text-slate-100"
+              >
+                {type === "login" ? "Sign up" : "Log in"}
+              </Link>
+            </p>
+
             {message ? (
-              <p className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+              <p
+                role={messageType === "error" ? "alert" : "status"}
+                className={`mt-4 rounded-xl border px-4 py-3 text-sm ${messageStyles[messageType] || messageStyles.info}`}
+              >
                 {message}
               </p>
             ) : null}

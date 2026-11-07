@@ -2,6 +2,22 @@
 @import "tailwindcss/components";
 @import "tailwindcss/utilities";
 
+@layer base {
+  body {
+    @apply bg-white text-slate-900 transition-colors duration-200 dark:bg-slate-950 dark:text-slate-100;
+  }
+
+  /* Bare `border` utilities and form controls pick a readable colour in dark mode. */
+  .dark *,
+  .dark ::before,
+  .dark ::after {
+    border-color: theme("colors.slate.700");
+  }
+
+  .dark :where(input, textarea, select) {
+    @apply bg-slate-900 text-slate-100 placeholder:text-slate-500;
+  }
+}
 
 body {
   margin: 0;

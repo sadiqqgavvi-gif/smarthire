@@ -1,7 +1,7 @@
 // src/components/Footer.jsx
 export default function Footer() {
   return (
-    <footer className="bg-gray-900 text-gray-400 py-10">
+    <footer className="bg-gray-900 text-gray-400 py-10 dark:border-t dark:border-slate-800 dark:bg-black">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <h3 className="text-white text-lg font-semibold mb-4">SmartHire</h3>
         <p className="text-sm mb-6">
@@ -18,7 +18,7 @@ export default function Footer() {
             </a>
           ))}
         </div>
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-gray-500 dark:text-slate-400">
           © {new Date().getFullYear()} SmartHire. All rights reserved.
         </p>
       </div>

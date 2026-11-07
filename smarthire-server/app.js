@@ -11,7 +11,12 @@ import practiceRoutes from "./routes/practiceRoutes.js";
 import mockRoutes from "./routes/mockRoutes.js";
 import { notFound, errorHandler } from "./utils/errorHandler.js";
 import { apiLimiter, aiLimiter } from "./middleware/rateLimitMiddleware.js";
-import { connectDatabase, ensureDatabaseConnection } from "./utils/database.js";
+import {
+  connectDatabase,
+  ensureDatabaseConnection,
+  getLastDatabaseError,
+  isMongoUriConfigured,
+} from "./utils/database.js";
 import {
   attachRequestContext,
   logHttpRequest,
@@ -20,6 +25,9 @@ import {
 dotenv.config();
 
 const app = express();
+
+const isJwtSecretConfigured = () =>
+  Boolean(process.env.ACCESS_TOKEN_SECRET || process.env.JWT_SECRET);
 
 app.set("trust proxy", 1);
 
@@ -85,6 +93,7 @@ app.get("/health/ready", async (_req, res) => {
   const dbReady = mongoose.connection.readyState === 1;
 
   if (!dbReady) {
+    const dbError = getLastDatabaseError();
     return res.status(503).json({
       success: false,
       ...(requestId ? { requestId } : {}),
@@ -92,9 +101,13 @@ app.get("/health/ready", async (_req, res) => {
       error: {
         code: "SERVICE_NOT_READY",
         message: "MongoDB connection is not ready",
+        ...(dbError ? { reason: dbError.code, hint: dbError.hint } : {}),
       },
       checks: {
         mongodb: "down",
+        mongoUriConfigured: isMongoUriConfigured(),
+        jwtSecretConfigured: isJwtSecretConfigured(),
+        googleClientIdConfigured: Boolean(process.env.GOOGLE_CLIENT_ID),
       },
     });
   }
@@ -107,6 +120,8 @@ app.get("/health/ready", async (_req, res) => {
     check: "ready",
     checks: {
       mongodb: "up",
+      jwtSecretConfigured: isJwtSecretConfigured(),
+      googleClientIdConfigured: Boolean(process.env.GOOGLE_CLIENT_ID),
     },
     timestamp: new Date().toISOString(),
   });
