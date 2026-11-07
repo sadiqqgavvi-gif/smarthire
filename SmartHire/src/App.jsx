@@ -4,7 +4,7 @@ import Navbar from "./layout/Navbar";
 import Hero from "./components/Hero";
 import Features from "./components/Features";
 import Practice from "./components/Practice";
-import Testimonials from "./components/Testimonials";
+import FAQ from "./components/FAQ";
 import Contact from "./components/Contact";
 import Footer from "./layout/Footer";
 
@@ -39,7 +39,7 @@ export default function App() {
               <Hero />
               <Features />
               <Practice />
-              <Testimonials />
+              <FAQ />
               <Contact />
               <Footer />
             </>
