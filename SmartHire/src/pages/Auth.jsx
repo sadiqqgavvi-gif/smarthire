@@ -334,6 +334,35 @@ export default function Auth({ type }) {
           </div>
 
           <div className="p-6 sm:p-10">
+            <div
+              role="tablist"
+              aria-label="Choose sign up or log in"
+              className="mb-6 grid grid-cols-2 rounded-xl bg-slate-100 p-1 text-sm font-medium dark:bg-slate-800"
+            >
+              {[
+                { key: "signup", label: "Sign up", to: "/signup" },
+                { key: "login", label: "Log in", to: "/login" },
+              ].map((tab) => {
+                const active = (tab.key === "signup") === isSignup;
+                return (
+                  <Link
+                    key={tab.key}
+                    to={tab.to}
+                    replace
+                    role="tab"
+                    aria-selected={active}
+                    className={`rounded-lg px-4 py-2 text-center transition ${
+                      active
+                        ? "bg-white text-slate-900 shadow-sm dark:bg-slate-950 dark:text-slate-100"
+                        : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+                    }`}
+                  >
+                    {tab.label}
+                  </Link>
+                );
+              })}
+            </div>
+
             <div className="mb-6">
               <h2 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl dark:text-slate-100">
                 {copy.title}
@@ -482,16 +511,6 @@ export default function Auth({ type }) {
                 )}
               </button>
             </form>
-
-            <p className="mt-5 text-center text-sm text-slate-500 dark:text-slate-400">
-              {isSignup ? "Already have an account? " : "New to SmartHire? "}
-              <Link
-                to={isSignup ? "/login" : "/signup"}
-                className="font-semibold text-slate-900 hover:underline dark:text-slate-100"
-              >
-                {isSignup ? "Log in" : "Create an account"}
-              </Link>
-            </p>
 
             {message ? (
               <p
