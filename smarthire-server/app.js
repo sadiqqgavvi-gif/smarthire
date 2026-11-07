@@ -16,6 +16,7 @@ import {
   ensureDatabaseConnection,
   getLastDatabaseError,
   isMongoUriConfigured,
+  tryDatabaseConnection,
 } from "./utils/database.js";
 import {
   attachRequestContext,
@@ -101,7 +102,9 @@ app.get("/health/ready", async (_req, res) => {
       error: {
         code: "SERVICE_NOT_READY",
         message: "MongoDB connection is not ready",
-        ...(dbError ? { reason: dbError.code, hint: dbError.hint } : {}),
+        ...(dbError
+          ? { reason: dbError.code, detail: dbError.detail || undefined, hint: dbError.hint }
+          : {}),
       },
       checks: {
         mongodb: "down",
@@ -127,8 +130,26 @@ app.get("/health/ready", async (_req, res) => {
   });
 });
 
+// Routes that can still work without MongoDB: questions fall back to the bundled
+// markdown question bank and AI evaluation does not touch the database.
+const isDatabaseOptionalRoute = (req) => {
+  const path = req.path.replace(/\/+$/, "");
+  if (req.method === "GET" && path === "/questions") return true;
+  if (path.startsWith("/ai/")) return true;
+  if (path === "/mock/evaluate") return true;
+  if (req.method === "GET" && /^\/mock\/[^/]+$/.test(path)) return true;
+  if (req.method === "GET" && /^\/practice\/[^/]+$/.test(path) && path !== "/practice/sessions") {
+    return true;
+  }
+  return false;
+};
+
 if (process.env.VERCEL || process.env.NODE_ENV === "production") {
-  app.use("/api", ensureDatabaseConnection);
+  app.use("/api", (req, res, next) =>
+    isDatabaseOptionalRoute(req)
+      ? tryDatabaseConnection(req, res, next)
+      : ensureDatabaseConnection(req, res, next)
+  );
 }
 
 app.use("/api/mock", mockRoutes);

@@ -1,6 +1,19 @@
 import Question from "../models/questionModel.js";
 import { evaluateInterviewAnswer } from "../services/aiEvaluationService.js";
 import { sendError, sendSuccess } from "../utils/apiResponse.js";
+import { getBundledQuestions } from "../utils/questionBank.js";
+import { isDatabaseConnected } from "../utils/database.js";
+
+const MOCK_QUESTION_COUNT = 10;
+
+const getBundledMockQuestions = (category, role) => {
+  const withRole = role
+    ? getBundledQuestions({ category, role, count: MOCK_QUESTION_COUNT })
+    : [];
+  return withRole.length
+    ? withRole
+    : getBundledQuestions({ category, count: MOCK_QUESTION_COUNT });
+};
 
 // ================= GET MOCK QUESTIONS =================
 export const getMockQuestions = async (req, res) => {
@@ -21,22 +34,24 @@ export const getMockQuestions = async (req, res) => {
     const filter = { category };
     if (role) filter.role = role;
 
-    const totalAvailable = await Question.countDocuments(filter);
+    const totalAvailable = isDatabaseConnected()
+      ? await Question.countDocuments(filter)
+      : 0;
 
-    if (totalAvailable === 0) {
+    const questions = totalAvailable
+      ? await Question.aggregate([
+          { $match: filter },
+          { $sample: { size: Math.min(totalAvailable, MOCK_QUESTION_COUNT) } },
+        ])
+      : getBundledMockQuestions(category, role);
+
+    if (!questions.length) {
       return sendError(res, {
         status: 404,
         code: "NOT_FOUND",
         message: "No questions found for this category/role",
       });
     }
-
-    const sampleSize = Math.min(totalAvailable, 10);
-
-    const questions = await Question.aggregate([
-      { $match: filter },
-      { $sample: { size: sampleSize } },
-    ]);
 
     return sendSuccess(res, {
       category,
