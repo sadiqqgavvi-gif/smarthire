@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { createElement, useEffect, useRef, useState } from "react";
 import axios from "axios";
 import {
   Chrome,
@@ -9,6 +9,11 @@ import {
   LockKeyhole,
   Mail,
   Loader2,
+  Eye,
+  EyeOff,
+  User,
+  CheckCircle2,
+  LayoutDashboard,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { authFetch, logoutUser } from "../utils/authFetch";
@@ -20,8 +25,40 @@ import { useTheme } from "../theme/themeContext";
 
 const GOOGLE_SIGN_IN_SCRIPT_ID = "google-sign-in-script";
 
+const EMPTY_FORM = { name: "", email: "", password: "", confirmPassword: "" };
+
+const PAGE_COPY = {
+  login: {
+    panelTitle: "Welcome back",
+    panelText:
+      "Pick up where you left off. Your practice history, mock interview scores and dashboard are waiting for you.",
+    title: "Log in to SmartHire",
+    subtitle: "Continue with Google or use the email and password you signed up with.",
+    googleHint: "Signed up with Google? Use this button. No password needed.",
+    divider: "or log in with email",
+  },
+  signup: {
+    panelTitle: "Create your free account",
+    panelText:
+      "Start practicing technical, behavioral and situational interviews in under a minute.",
+    title: "Create your SmartHire account",
+    subtitle: "Sign up with Google in one click, or create an account with your email.",
+    googleHint: "Your account is created automatically the first time you continue with Google.",
+    divider: "or sign up with email",
+  },
+};
+
+const PANEL_FEATURES = [
+  "AI feedback on every answer",
+  "Mock interviews with progress tracking",
+  "One account: Google or email, your choice",
+];
+
 export default function Auth({ type }) {
-  const [form, setForm] = useState({ email: "", password: "" });
+  const [form, setForm] = useState(EMPTY_FORM);
+  const [showPassword, setShowPassword] = useState(false);
+  const isSignup = type === "signup";
+  const copy = isSignup ? PAGE_COPY.signup : PAGE_COPY.login;
   const [message, setMessage] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [googleReady, setGoogleReady] = useState(false);
@@ -42,8 +79,9 @@ export default function Auth({ type }) {
   useEffect(() => {
     let isMounted = true;
 
-    setForm({ email: "", password: "" });
+    setForm(EMPTY_FORM);
     setMessage("");
+    setShowPassword(false);
 
     const checkAuth = async () => {
       try {
@@ -61,14 +99,9 @@ export default function Auth({ type }) {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [type]);
 
   useEffect(() => {
-    if (type !== "login") {
-      setGoogleReady(false);
-      return;
-    }
-
     if (!googleClientId) {
       setGoogleReady(false);
       return;
@@ -99,7 +132,11 @@ export default function Auth({ type }) {
             );
 
             setAccessToken(res.data?.accessToken);
-            showMessage(res.data?.message || "Google login successful", "success");
+            showMessage(
+              res.data?.message ||
+                (res.data?.isNewUser ? "Account created with Google" : "Google login successful"),
+              "success"
+            );
             const verifyRes = await authFetch(`${API_BASE_URL}/api/auth/me`);
 
             if (!verifyRes.ok) {
@@ -121,7 +158,7 @@ export default function Auth({ type }) {
         size: "large",
         width: googleButtonRef.current.clientWidth || 320,
         shape: "pill",
-        text: "continue_with",
+        text: type === "signup" ? "signup_with" : "signin_with",
       });
       setGoogleReady(true);
     };
@@ -170,7 +207,7 @@ export default function Auth({ type }) {
       showMessage("Logout failed", "error");
     } finally {
       setIsAuthenticated(false);
-      setForm({ email: "", password: "" });
+      setForm(EMPTY_FORM);
       navigate("/", { replace: true });
     }
   };
@@ -199,7 +236,8 @@ export default function Auth({ type }) {
     if (submitting) return;
 
     const email = form.email.trim();
-    const { password } = form;
+    const name = form.name.trim();
+    const { password, confirmPassword } = form;
 
     if (!email || !password) {
       showMessage("Please enter both email and password.", "error");
@@ -211,21 +249,26 @@ export default function Auth({ type }) {
       return;
     }
 
+    if (isSignup && password !== confirmPassword) {
+      showMessage("Passwords do not match.", "error");
+      return;
+    }
+
     try {
       setSubmitting(true);
       setMessage("");
 
-      const url =
-        type === "login"
-          ? `${API_BASE_URL}/api/auth/login`
-          : `${API_BASE_URL}/api/auth/register`;
+      const url = isSignup
+        ? `${API_BASE_URL}/api/auth/register`
+        : `${API_BASE_URL}/api/auth/login`;
+      const payload = isSignup ? { name, email, password } : { email, password };
 
-      const res = await axios.post(url, { email, password }, { withCredentials: true });
+      const res = await axios.post(url, payload, { withCredentials: true });
       setAccessToken(res.data?.accessToken);
 
       // Registration also signs the user in, so both flows land on the home page.
       await verifySessionAndRedirect(
-        res.data?.message || (type === "login" ? "Login successful" : "Registration successful"),
+        res.data?.message || (isSignup ? "Registration successful" : "Login successful"),
         "/"
       );
     } catch (err) {
@@ -243,17 +286,19 @@ export default function Auth({ type }) {
     info: "border-slate-200 bg-slate-50 text-slate-600 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-400",
   };
 
+  const updateField = (field) => (e) => setForm({ ...form, [field]: e.target.value });
+
   return (
-    <div className="min-h-screen bg-slate-100 px-4 py-8 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+    <div className="min-h-screen bg-slate-100 px-4 pb-8 pt-20 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
       <button
         onClick={handleBack}
-        className="absolute left-6 top-6 inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
+        className="absolute left-4 top-4 inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 sm:left-6 sm:top-6 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
       >
         <ArrowLeft className="h-4 w-4" />
         Back
       </button>
 
-      <div className="absolute right-6 top-6 flex items-center gap-2">
+      <div className="absolute right-4 top-4 flex items-center gap-2 sm:right-6 sm:top-6">
         <ThemeToggle />
         {isAuthenticated ? (
           <button
@@ -266,7 +311,7 @@ export default function Auth({ type }) {
         ) : null}
       </div>
 
-      <div className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-6xl items-center justify-center">
+      <div className="mx-auto flex min-h-[calc(100vh-7rem)] max-w-6xl items-center justify-center">
         <div className="grid w-full overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_20px_80px_rgba(15,23,42,0.12)] lg:grid-cols-[1.05fr_0.95fr] dark:border-slate-700 dark:bg-slate-900">
           <div className="hidden flex-col justify-between bg-slate-950 p-10 text-white lg:flex">
             <div>
@@ -274,106 +319,145 @@ export default function Auth({ type }) {
                 <SparklesIcon />
                 SmartHire access
               </div>
-              <h1 className="mt-6 text-4xl font-semibold tracking-tight">
-                {type === "login" ? "Welcome back" : "Create your account"}
-              </h1>
-              <p className="mt-4 max-w-md text-sm leading-6 text-slate-300">
-                Sign in with email or use Google to move straight into your interview practice and
-                dashboard.
-              </p>
+              <h1 className="mt-6 text-4xl font-semibold tracking-tight">{copy.panelTitle}</h1>
+              <p className="mt-4 max-w-md text-sm leading-6 text-slate-300">{copy.panelText}</p>
             </div>
 
-            <div className="space-y-3 text-sm text-slate-300">
-              <p>Polished session tracking</p>
-              <p>Mock interview analytics</p>
-              <p>Fast access with Google sign-in</p>
-            </div>
+            <ul className="space-y-3 text-sm text-slate-300">
+              {PANEL_FEATURES.map((feature) => (
+                <li key={feature} className="flex items-center gap-3">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                  {feature}
+                </li>
+              ))}
+            </ul>
           </div>
 
-          <div className="p-8 sm:p-10">
-            <div className="mb-8">
-              <h2 className="text-3xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
-                {type === "login" ? "Login to SmartHire" : "Create Your SmartHire Account"}
+          <div className="p-6 sm:p-10">
+            <div className="mb-6">
+              <h2 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl dark:text-slate-100">
+                {copy.title}
               </h2>
-              <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-                {type === "login"
-                  ? "Use your email and password, or continue with Google."
-                  : "Create a new account with email and password."}
-              </p>
+              <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">{copy.subtitle}</p>
             </div>
 
-            {type === "login" ? (
-              <div className="mb-6">
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/60">
-                  {googleClientId ? (
-                    <>
-                      <div ref={googleButtonRef} className="min-h-[44px]" />
-                      {googleLoading ? (
-                        <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">Signing you in with Google...</p>
-                      ) : !googleReady ? (
-                        <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">Preparing Google sign-in...</p>
-                      ) : null}
-                    </>
-                  ) : (
-                    <button
-                      type="button"
-                      disabled
-                      className="inline-flex w-full items-center justify-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-400 dark:border-slate-700 dark:bg-slate-900"
-                    >
-                      <Chrome className="h-4 w-4" />
-                      Continue with Google
-                    </button>
-                  )}
-                  {!googleClientId ? (
-                    <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
-                      Google sign-in will appear once `VITE_GOOGLE_CLIENT_ID` is configured.
-                    </p>
-                  ) : null}
-                </div>
-
-                <div className="my-6 flex items-center gap-3">
-                  <div className="h-px flex-1 bg-slate-200 dark:bg-slate-700" />
-                  <span className="text-xs font-medium uppercase tracking-[0.2em] text-slate-400">
-                    or
-                  </span>
-                  <div className="h-px flex-1 bg-slate-200 dark:bg-slate-700" />
-                </div>
+            {isAuthenticated ? (
+              <div className="mb-6 flex flex-col gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800 sm:flex-row sm:items-center sm:justify-between dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300">
+                <span>You are already signed in.</span>
+                <Link
+                  to="/dashboard"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 font-medium text-white transition hover:bg-emerald-700"
+                >
+                  <LayoutDashboard className="h-4 w-4" />
+                  Go to dashboard
+                </Link>
               </div>
             ) : null}
 
-            <form onSubmit={handleSubmit} autoComplete="off" className="space-y-4">
-              <label className="block">
-                <span className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">Email</span>
-                <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 focus-within:border-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:focus-within:border-slate-500">
-                  <Mail className="h-4 w-4 text-slate-400" />
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/60">
+              {googleClientId ? (
+                <>
+                  <div ref={googleButtonRef} className="min-h-[44px]" />
+                  <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
+                    {googleLoading
+                      ? "Signing you in with Google..."
+                      : !googleReady
+                        ? "Preparing Google sign-in..."
+                        : copy.googleHint}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    disabled
+                    className="inline-flex w-full items-center justify-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-400 dark:border-slate-700 dark:bg-slate-900"
+                  >
+                    <Chrome className="h-4 w-4" />
+                    Continue with Google
+                  </button>
+                  <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
+                    Google sign-in will appear once `VITE_GOOGLE_CLIENT_ID` is configured.
+                  </p>
+                </>
+              )}
+            </div>
+
+            <div className="my-6 flex items-center gap-3">
+              <div className="h-px flex-1 bg-slate-200 dark:bg-slate-700" />
+              <span className="text-xs font-medium uppercase tracking-[0.2em] text-slate-400">
+                {copy.divider}
+              </span>
+              <div className="h-px flex-1 bg-slate-200 dark:bg-slate-700" />
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {isSignup ? (
+                <AuthField label="Full name" icon={User}>
                   <input
-                    type="email"
-                    placeholder="Email"
-                    value={form.email}
-                    required
-                    autoComplete="email"
-                    onChange={(e) => setForm({ ...form, email: e.target.value })}
+                    type="text"
+                    placeholder="Your name (optional)"
+                    value={form.name}
+                    maxLength={80}
+                    autoComplete="name"
+                    onChange={updateField("name")}
                     className="w-full bg-transparent outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
                   />
-                </div>
-              </label>
+                </AuthField>
+              ) : null}
 
-              <label className="block">
-                <span className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">Password</span>
-                <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 focus-within:border-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:focus-within:border-slate-500">
-                  <LockKeyhole className="h-4 w-4 text-slate-400" />
+              <AuthField label="Email" icon={Mail}>
+                <input
+                  type="email"
+                  placeholder="Email"
+                  value={form.email}
+                  required
+                  autoComplete="email"
+                  onChange={updateField("email")}
+                  className="w-full bg-transparent outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
+                />
+              </AuthField>
+
+              <AuthField
+                label="Password"
+                icon={LockKeyhole}
+                trailing={
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((current) => !current)}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    className="text-slate-400 transition hover:text-slate-600 dark:hover:text-slate-200"
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                }
+              >
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder={isSignup ? "At least 6 characters" : "Password"}
+                  value={form.password}
+                  required
+                  minLength={6}
+                  autoComplete={isSignup ? "new-password" : "current-password"}
+                  onChange={updateField("password")}
+                  className="w-full bg-transparent outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
+                />
+              </AuthField>
+
+              {isSignup ? (
+                <AuthField label="Confirm password" icon={LockKeyhole}>
                   <input
-                    type="password"
-                    placeholder="Password"
-                    value={form.password}
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Re-enter your password"
+                    value={form.confirmPassword}
                     required
                     minLength={6}
-                    autoComplete={type === "login" ? "current-password" : "new-password"}
-                    onChange={(e) => setForm({ ...form, password: e.target.value })}
+                    autoComplete="new-password"
+                    onChange={updateField("confirmPassword")}
                     className="w-full bg-transparent outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
                   />
-                </div>
-              </label>
+                </AuthField>
+              ) : null}
 
               <button
                 type="submit"
@@ -383,29 +467,29 @@ export default function Auth({ type }) {
                 {submitting ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    {type === "login" ? "Logging in..." : "Creating account..."}
+                    {isSignup ? "Creating account..." : "Logging in..."}
                   </>
-                ) : type === "login" ? (
+                ) : isSignup ? (
                   <>
-                    <LogIn className="h-4 w-4" />
-                    Login
+                    <UserPlus className="h-4 w-4" />
+                    Create account
                   </>
                 ) : (
                   <>
-                    <UserPlus className="h-4 w-4" />
-                    Sign Up
+                    <LogIn className="h-4 w-4" />
+                    Log in
                   </>
                 )}
               </button>
             </form>
 
-            <p className="mt-4 text-center text-sm text-slate-500 dark:text-slate-400">
-              {type === "login" ? "Don't have an account? " : "Already have an account? "}
+            <p className="mt-5 text-center text-sm text-slate-500 dark:text-slate-400">
+              {isSignup ? "Already have an account? " : "New to SmartHire? "}
               <Link
-                to={type === "login" ? "/signup" : "/login"}
+                to={isSignup ? "/login" : "/signup"}
                 className="font-semibold text-slate-900 hover:underline dark:text-slate-100"
               >
-                {type === "login" ? "Sign up" : "Log in"}
+                {isSignup ? "Log in" : "Create an account"}
               </Link>
             </p>
 
@@ -421,6 +505,21 @@ export default function Auth({ type }) {
         </div>
       </div>
     </div>
+  );
+}
+
+function AuthField({ label, icon, trailing = null, children }) {
+  return (
+    <label className="block">
+      <span className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
+        {label}
+      </span>
+      <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 focus-within:border-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:focus-within:border-slate-500">
+        {createElement(icon, { className: "h-4 w-4 shrink-0 text-slate-400" })}
+        {children}
+        {trailing}
+      </div>
+    </label>
   );
 }
 
