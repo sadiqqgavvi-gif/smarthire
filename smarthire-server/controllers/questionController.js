@@ -1,6 +1,7 @@
 import Question from "../models/questionModel.js";
 import { sendError, sendSuccess } from "../utils/apiResponse.js";
 import { getBundledQuestions } from "../utils/questionBank.js";
+import { isDatabaseConnected } from "../utils/database.js";
 
 const buildUniqueQuestionPipeline = (filter, size, excludedQuestions = []) => {
   const pipeline = [
@@ -68,10 +69,14 @@ export const getQuestions = async (req, res) => {
     }
 
     // Random questions with duplicate text removed.
-    let questions = await Question.aggregate(buildUniqueQuestionPipeline(filter, count));
+    // Without a database connection, serve everything from the bundled question bank.
+    const dbReady = isDatabaseConnected();
+    let questions = dbReady
+      ? await Question.aggregate(buildUniqueQuestionPipeline(filter, count))
+      : [];
 
     // Fallback/top-up for sparse difficulty buckets (for example, situational + easy).
-    if (questions.length < count && filter.difficulty) {
+    if (dbReady && questions.length < count && filter.difficulty) {
       const remaining = count - questions.length;
       const seen = questions.map((q) => q.question.trim().toLowerCase());
       const extraQuestions = await Question.aggregate(

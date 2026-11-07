@@ -5,6 +5,7 @@ import PracticeSession from "../models/PracticeSession.js";
 import { validatePracticeSessionPayload } from "../middleware/validationMiddleware.js";
 import { sendError, sendSuccess } from "../utils/apiResponse.js";
 import { getBundledQuestions } from "../utils/questionBank.js";
+import { isDatabaseConnected } from "../utils/database.js";
 
 const router = express.Router();
 
@@ -143,9 +144,12 @@ router.get("/:type", async (req, res) => {
       filter.difficulty = difficulty.toLowerCase();
     }
 
-    let questions = await Question.aggregate(buildUniqueQuestionPipeline(filter, count));
+    const dbReady = isDatabaseConnected();
+    let questions = dbReady
+      ? await Question.aggregate(buildUniqueQuestionPipeline(filter, count))
+      : [];
 
-    if (questions.length < count && filter.difficulty) {
+    if (dbReady && questions.length < count && filter.difficulty) {
       const remaining = count - questions.length;
       const seen = questions.map((q) => q.question.trim().toLowerCase());
       const extraQuestions = await Question.aggregate(

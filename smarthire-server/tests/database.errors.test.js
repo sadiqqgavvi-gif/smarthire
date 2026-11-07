@@ -27,3 +27,16 @@ test("malformed connection strings are reported as invalid", () => {
   error.name = "MongoParseError";
   assert.equal(describeDatabaseError(error).code, "DATABASE_URI_INVALID");
 });
+
+test("SRV lookups for a deleted or mistyped cluster are reported as host not found", () => {
+  const error = new Error("querySrv ENOTFOUND _mongodb._tcp.cluster0.abcde.mongodb.net");
+  error.code = "ENOTFOUND";
+  const details = describeDatabaseError(error);
+  assert.equal(details.code, "DATABASE_HOST_NOT_FOUND");
+  assert.equal(details.detail, "ENOTFOUND");
+});
+
+test("other SRV DNS failures are reported as DNS problems", () => {
+  const error = new Error("querySrv ECONNREFUSED _mongodb._tcp.cluster0.abcde.mongodb.net");
+  assert.equal(describeDatabaseError(error).code, "DATABASE_DNS_FAILED");
+});
