@@ -65,6 +65,9 @@ export default function Navbar() {
             <a href="#practice" className="text-gray-600 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400">
               Practice
             </a>
+            <a href="#faq" className="text-gray-600 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400">
+              FAQ
+            </a>
         
             <a href="#contact" className="text-gray-600 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400">
               Contact
@@ -143,6 +146,13 @@ export default function Navbar() {
               onClick={() => setMenuOpen(false)}
             >
               Practice
+            </a>
+            <a
+              href="#faq"
+              className="text-gray-700 hover:bg-gray-100 px-3 py-2 rounded-md dark:text-slate-300 dark:hover:bg-slate-800"
+              onClick={() => setMenuOpen(false)}
+            >
+              FAQ
             </a>
 
             <a
