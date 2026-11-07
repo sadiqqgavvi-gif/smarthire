@@ -34,7 +34,7 @@ const toText = (value, fallback = "") => {
 const clampScore = (value, minimum = 1, maximum = 10) => {
   const numeric = Number(value);
   if (!Number.isFinite(numeric)) return minimum;
-  return Math.max(minimum, Math.min(maximum, Math.round(numeric)));
+  return Math.max(minimum, Math.min(maximum, Math.round(numeric * 10) / 10));
 };
 
 const tokenize = (value = "") =>

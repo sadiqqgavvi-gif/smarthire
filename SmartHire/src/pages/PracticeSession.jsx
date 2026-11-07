@@ -339,7 +339,7 @@ export default function PracticeSession() {
 
                 {evaluation ? (
                   <div className="mt-5">
-                    <FeedbackPanel evaluation={evaluation} />
+                    <FeedbackPanel evaluation={evaluation} category={category} />
                   </div>
                 ) : null}
               </li>

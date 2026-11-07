@@ -16,7 +16,7 @@ const FAQS = [
   {
     question: "How does SmartHire evaluate my answers?",
     answer:
-      "Each answer is checked against the question by SmartHire's evaluation engine. When the AI model is available it gives detailed feedback; otherwise a built-in evaluator scores your answer. Either way you get a score out of 10, strengths, weaknesses and a tip to improve.",
+      "Every answer is scored out of 10 on five criteria: relevance, depth, structure (the STAR method for behavioral questions), clarity and examples. For over a thousand technical questions SmartHire compares your answer with a reference answer and tells you which key concepts you missed. It also points out filler words and lets you view a model answer. When an AI model is connected, it adds more detailed written feedback.",
   },
   {
     question: "What is the difference between a practice session and a mock interview?",
