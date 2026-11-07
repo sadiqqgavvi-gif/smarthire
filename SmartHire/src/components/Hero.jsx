@@ -14,7 +14,7 @@ import {
 const STATS = [
   { value: "30,000+", label: "Practice questions" },
   { value: "3", label: "Interview tracks" },
-  { value: "25", label: "Technical topics" },
+  { value: "20+", label: "Technical topics" },
   { value: "Instant", label: "AI feedback" },
 ];
 
