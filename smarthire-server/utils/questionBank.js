@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import zlib from "zlib";
 import { fileURLToPath } from "url";
 import {
   extractQuestionsFromMarkdown,
@@ -9,8 +10,13 @@ import {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const TOPICS_PATH = path.resolve(__dirname, "../topics/en");
+// Pre-parsed copy of the markdown question bank (see scripts/buildQuestionBankCache.js).
+// Parsing 30,000 questions from markdown takes ~1s on every serverless cold start;
+// reading this compressed JSON takes a few tens of milliseconds.
+export const QUESTION_BANK_CACHE_PATH = path.resolve(__dirname, "../data/questionBank.json.gz");
 
 let cachedQuestions = null;
+let cachedByCategory = null;
 
 export const assignDifficulty = (text = "") => {
   const words = text.trim().split(/\s+/).filter(Boolean).length;
@@ -70,9 +76,63 @@ const getAllMarkdownFiles = (dir, fileSet = new Set()) => {
   return [...fileSet];
 };
 
+const toQuestion = (category, question, difficulty, index) => ({
+  _id: `bundled-${category}-${index + 1}`,
+  question,
+  category,
+  difficulty,
+  role: "general",
+  source: "bundled",
+});
+
+const loadFromCache = () => {
+  if (!fs.existsSync(QUESTION_BANK_CACHE_PATH)) return null;
+  try {
+    const data = JSON.parse(zlib.gunzipSync(fs.readFileSync(QUESTION_BANK_CACHE_PATH)).toString("utf-8"));
+    return Object.entries(data.categories).flatMap(([category, rows]) =>
+      rows.map(([question, difficulty], index) => toQuestion(category, question, difficulty, index))
+    );
+  } catch (error) {
+    console.warn("Question bank cache unreadable, parsing markdown instead:", error?.message || error);
+    return null;
+  }
+};
+
+// Compact form written to the cache: { categories: { technical: [[question, difficulty], ...] } }
+export const serializeQuestionBank = (questions) => {
+  const categories = {};
+  for (const q of questions) {
+    (categories[q.category] ||= []).push([q.question, q.difficulty]);
+  }
+  return { version: 1, generatedFrom: "topics/en", categories };
+};
+
 export const loadBundledQuestions = () => {
   if (cachedQuestions) return cachedQuestions;
+  cachedQuestions = loadFromCache() || parseBundledQuestionsFromMarkdown();
+  return cachedQuestions;
+};
 
+const getQuestionsByCategory = () => {
+  if (!cachedByCategory) {
+    cachedByCategory = new Map();
+    for (const q of loadBundledQuestions()) {
+      if (!cachedByCategory.has(q.category)) cachedByCategory.set(q.category, []);
+      cachedByCategory.get(q.category).push(q);
+    }
+  }
+  return cachedByCategory;
+};
+
+// Picks up to `size` random items without shuffling the whole list.
+const sample = (items, size) => {
+  if (items.length <= size) return [...items].sort(() => Math.random() - 0.5);
+  const picked = new Set();
+  while (picked.size < size) picked.add(Math.floor(Math.random() * items.length));
+  return [...picked].map((index) => items[index]);
+};
+
+export const parseBundledQuestionsFromMarkdown = () => {
   const seenByCategory = new Map();
   const questions = [];
 
@@ -102,8 +162,7 @@ export const loadBundledQuestions = () => {
     }
   }
 
-  cachedQuestions = questions;
-  return cachedQuestions;
+  return questions;
 };
 
 export const getBundledQuestions = ({
@@ -123,12 +182,15 @@ export const getBundledQuestions = ({
 
   const matchesBase = (item) => {
     if (item.category !== normalizedCategory) return false;
-    if (excluded.has(normalizeQuestionKey(item.question))) return false;
+    // Normalising the text is a regex per question, so only do it when something is excluded.
+    if (excluded.size && excluded.has(normalizeQuestionKey(item.question))) return false;
     if (normalizedRole && item.role !== normalizedRole) return false;
     return true;
   };
 
-  let matches = loadBundledQuestions().filter((item) => {
+  const pool = getQuestionsByCategory().get(normalizedCategory) || [];
+
+  let matches = pool.filter((item) => {
     if (!matchesBase(item)) return false;
     if (
       normalizedDifficulty &&
@@ -142,12 +204,12 @@ export const getBundledQuestions = ({
 
   if (matches.length < size && normalizedDifficulty && normalizedDifficulty !== "any") {
     const seen = new Set(matches.map((item) => normalizeQuestionKey(item.question)));
-    const extras = loadBundledQuestions().filter((item) => {
+    const extras = pool.filter((item) => {
       const key = normalizeQuestionKey(item.question);
       return matchesBase(item) && !seen.has(key);
     });
     matches = [...matches, ...extras];
   }
 
-  return matches.sort(() => Math.random() - 0.5).slice(0, size);
+  return sample(matches, size);
 };

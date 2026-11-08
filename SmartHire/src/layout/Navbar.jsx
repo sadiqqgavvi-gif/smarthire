@@ -3,6 +3,7 @@ import { Menu, X } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { authFetch, logoutUser } from "../utils/authFetch";
 import { API_BASE_URL } from "../utils/apiBaseUrl";
+import { getAccessToken } from "../utils/authToken";
 import ThemeToggle from "../components/ThemeToggle";
 
 export default function Navbar() {
@@ -16,6 +17,9 @@ export default function Navbar() {
     let isMounted = true;
 
     const checkAuth = async () => {
+      // Visitors who never signed in on this browser have no stored token: skip the
+      // request instead of producing a 401 on every landing-page visit.
+      if (!getAccessToken()) return;
       try {
         const res = await authFetch(`${API_BASE_URL}/api/auth/me`);
         if (!isMounted) return;
@@ -31,7 +35,7 @@ export default function Navbar() {
     return () => {
       isMounted = false;
     };
-  }, [API_BASE_URL]);
+  }, []);
 
   // Transparent over the hero, solid once the page scrolls.
   useEffect(() => {

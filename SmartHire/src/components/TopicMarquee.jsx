@@ -27,7 +27,7 @@ export default function TopicMarquee() {
       className="border-y border-slate-200 bg-white py-6 dark:border-slate-800 dark:bg-slate-950"
     >
       <div className="mx-auto flex max-w-7xl flex-col items-center gap-4 px-4 sm:flex-row sm:gap-8 sm:px-6 lg:px-8">
-        <p className="shrink-0 text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
+        <p className="shrink-0 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
           Practice questions on
         </p>
         <div className="relative w-full overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]">

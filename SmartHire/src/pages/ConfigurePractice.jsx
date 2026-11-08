@@ -113,7 +113,7 @@ export default function ConfigurePractice() {
                       <CheckCircle2 className="absolute right-3 top-3 h-5 w-5 text-blue-600 dark:text-blue-400" />
                     ) : null}
                     {createElement(option.icon, {
-                      className: `h-5 w-5 ${selected ? "text-blue-600 dark:text-blue-400" : "text-slate-400"}`,
+                      className: `h-5 w-5 ${selected ? "text-blue-600 dark:text-blue-400" : "text-slate-500 dark:text-slate-400"}`,
                     })}
                     <p className="mt-3 font-semibold text-slate-900 dark:text-white">{option.title}</p>
                     <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-400">{option.text}</p>

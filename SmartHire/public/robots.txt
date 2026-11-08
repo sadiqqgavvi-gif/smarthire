@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /practice/
+Disallow: /mock-interview/
+
+Sitemap: https://smarrthire.netlify.app/sitemap.xml

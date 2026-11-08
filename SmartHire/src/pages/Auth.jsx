@@ -18,7 +18,7 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 import { authFetch, logoutUser } from "../utils/authFetch";
 import { API_BASE_URL } from "../utils/apiBaseUrl";
-import { setAccessToken } from "../utils/authToken";
+import { getAccessToken, setAccessToken } from "../utils/authToken";
 import { getAuthErrorMessage } from "../utils/authErrors";
 import ThemeToggle from "../components/ThemeToggle";
 import { useTheme } from "../theme/themeContext";
@@ -84,6 +84,7 @@ export default function Auth({ type }) {
     setShowPassword(false);
 
     const checkAuth = async () => {
+      if (!getAccessToken()) return; // never signed in on this browser
       try {
         const res = await authFetch(`${API_BASE_URL}/api/auth/me`);
         if (!isMounted) return;
@@ -354,7 +355,7 @@ export default function Auth({ type }) {
                     className={`rounded-lg px-4 py-2 text-center transition ${
                       active
                         ? "bg-white text-slate-900 shadow-sm dark:bg-slate-950 dark:text-slate-100"
-                        : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+                        : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
                     }`}
                   >
                     {tab.label}
@@ -375,7 +376,7 @@ export default function Auth({ type }) {
                 <span>You are already signed in.</span>
                 <Link
                   to="/dashboard"
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 font-medium text-white transition hover:bg-emerald-700"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-700 px-4 py-2 font-medium text-white transition hover:bg-emerald-800"
                 >
                   <LayoutDashboard className="h-4 w-4" />
                   Go to dashboard
@@ -402,7 +403,7 @@ export default function Auth({ type }) {
                   <button
                     type="button"
                     disabled
-                    className="inline-flex w-full items-center justify-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-400 dark:border-slate-700 dark:bg-slate-900"
+                    className="inline-flex w-full items-center justify-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400"
                   >
                     <Chrome className="h-4 w-4" />
                     Continue with Google
@@ -416,7 +417,7 @@ export default function Auth({ type }) {
 
             <div className="my-6 flex items-center gap-3">
               <div className="h-px flex-1 bg-slate-200 dark:bg-slate-700" />
-              <span className="text-xs font-medium uppercase tracking-[0.2em] text-slate-400">
+              <span className="text-xs font-medium uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
                 {copy.divider}
               </span>
               <div className="h-px flex-1 bg-slate-200 dark:bg-slate-700" />
@@ -457,7 +458,7 @@ export default function Auth({ type }) {
                     type="button"
                     onClick={() => setShowPassword((current) => !current)}
                     aria-label={showPassword ? "Hide password" : "Show password"}
-                    className="text-slate-400 transition hover:text-slate-600 dark:hover:text-slate-200"
+                    className="text-slate-500 transition hover:text-slate-600 dark:hover:text-slate-200 dark:text-slate-400"
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
@@ -536,7 +537,7 @@ function AuthField({ label, icon, trailing = null, children }) {
         {label}
       </span>
       <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 focus-within:border-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:focus-within:border-slate-500">
-        {createElement(icon, { className: "h-4 w-4 shrink-0 text-slate-400" })}
+        {createElement(icon, { className: "h-4 w-4 shrink-0 text-slate-500 dark:text-slate-400" })}
         {children}
         {trailing}
       </div>

@@ -31,7 +31,7 @@ const PRACTICE_TRACKS = [
     icon: Briefcase,
     accent: "from-orange-500 to-amber-500",
     ring: "hover:border-orange-300 dark:hover:border-orange-500/50",
-    link: "text-orange-600 dark:text-orange-400",
+    link: "text-orange-700 dark:text-orange-400",
     description: "Real workplace scenarios that test your judgement, priorities and problem-solving.",
     sample: "Your manager wants a feature tomorrow that needs a week. What do you do?",
     tags: ["Decisions", "Priorities", "Ethics", "Pressure"],
@@ -89,7 +89,7 @@ export default function Practice() {
                 </p>
 
                 <div className="mt-5 rounded-2xl bg-slate-50 p-4 dark:bg-slate-800/70">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                     Sample question
                   </p>
                   <p className="mt-1.5 text-sm font-medium leading-6 text-slate-700 dark:text-slate-200">

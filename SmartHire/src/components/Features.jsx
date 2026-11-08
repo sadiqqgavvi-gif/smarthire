@@ -255,7 +255,7 @@ const PILL_TONES = {
 function FeedbackPill({ label, text, tone }) {
   return (
     <div className={`rounded-xl border px-4 py-3 ${PILL_TONES[tone]}`}>
-      <p className="text-xs font-semibold uppercase tracking-wider opacity-80">{label}</p>
+      <p className="text-xs font-semibold uppercase tracking-wider">{label}</p>
       <p className="mt-1 text-sm">{text}</p>
     </div>
   );

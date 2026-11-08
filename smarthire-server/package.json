@@ -11,7 +11,8 @@
     "generate:soft-skills": "node scripts/generateSoftSkillsDatasets.js",
     "prestart": "npm run build:practice",
     "start": "node server.js",
-    "dataset": "node dataset.js"
+    "dataset": "node dataset.js",
+    "build:bank": "node scripts/buildQuestionBankCache.js"
   },
   "keywords": [],
   "author": "",

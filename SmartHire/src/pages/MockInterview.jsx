@@ -34,9 +34,9 @@ const PACE_RANGE = { min: 120, max: 160 };
 
 const describePace = (wpm) => {
   if (!wpm) return null;
-  if (wpm < PACE_RANGE.min) return { label: "A little slow", tone: "text-amber-600 dark:text-amber-400" };
-  if (wpm > PACE_RANGE.max) return { label: "A little fast", tone: "text-amber-600 dark:text-amber-400" };
-  return { label: "Good pace", tone: "text-emerald-600 dark:text-emerald-400" };
+  if (wpm < PACE_RANGE.min) return { label: "A little slow", tone: "text-amber-700 dark:text-amber-400" };
+  if (wpm > PACE_RANGE.max) return { label: "A little fast", tone: "text-amber-700 dark:text-amber-400" };
+  return { label: "Good pace", tone: "text-emerald-700 dark:text-emerald-400" };
 };
 
 const secondaryButton =
@@ -413,7 +413,7 @@ export default function MockInterview() {
     <p
       role="status"
       className={`mt-4 text-sm ${
-        sessionSaved ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"
+        sessionSaved ? "text-emerald-700 dark:text-emerald-400" : "text-red-600 dark:text-red-400"
       }`}
     >
       {saveMessage}
@@ -508,12 +508,12 @@ export default function MockInterview() {
             return (
               <div className="flex flex-wrap justify-center gap-3 px-6 pb-6 text-sm sm:px-8">
                 <span className="inline-flex items-center gap-2 rounded-xl bg-slate-100 px-3 py-2 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
-                  <Timer className="h-4 w-4 text-slate-400" />
+                  <Timer className="h-4 w-4 text-slate-500 dark:text-slate-400" />
                   Average answer time <strong>{formatTime(avgTime)}</strong>
                 </span>
                 {avgPace ? (
                   <span className="inline-flex items-center gap-2 rounded-xl bg-slate-100 px-3 py-2 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
-                    <Mic className="h-4 w-4 text-slate-400" />
+                    <Mic className="h-4 w-4 text-slate-500 dark:text-slate-400" />
                     Average speaking pace <strong>{avgPace} wpm</strong>
                     <span className={`text-xs font-semibold ${describePace(avgPace).tone}`}>
                       {describePace(avgPace).label}
@@ -598,14 +598,14 @@ export default function MockInterview() {
           <span className="flex items-center gap-3">
             <span
               className={`inline-flex items-center gap-1.5 tabular-nums ${
-                elapsed > 150 ? "text-amber-600 dark:text-amber-400" : "text-slate-500 dark:text-slate-400"
+                elapsed > 150 ? "text-amber-700 dark:text-amber-400" : "text-slate-500 dark:text-slate-400"
               }`}
               title="Time on this question. Aim for 1 to 2 minutes."
             >
               <Timer className="h-4 w-4" />
               {formatTime(answerStats ? answerStats.seconds : elapsed)}
             </span>
-            <span className="text-slate-400">{progress}% complete</span>
+            <span className="text-slate-500 dark:text-slate-400">{progress}% complete</span>
           </span>
         </div>
         <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
@@ -616,7 +616,7 @@ export default function MockInterview() {
         </div>
       </div>
 
-      <div className="mt-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 dark:border-slate-800 dark:bg-slate-900">
+      <div className="mt-6 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-8 dark:border-slate-800 dark:bg-slate-900">
         {/* Question */}
         <div className="flex items-start gap-4">
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-purple-600 text-white">
@@ -659,7 +659,7 @@ export default function MockInterview() {
               className="h-40 w-full resize-y rounded-2xl bg-transparent p-4 text-sm leading-6 text-slate-900 outline-none placeholder:text-slate-400 disabled:opacity-70 dark:text-slate-100 dark:placeholder:text-slate-500"
             />
             {interimTranscript ? (
-              <p className="px-4 pb-3 text-sm italic text-slate-400">{interimTranscript}…</p>
+              <p className="px-4 pb-3 text-sm italic text-slate-500 dark:text-slate-400">{interimTranscript}…</p>
             ) : null}
           </div>
 
@@ -699,7 +699,7 @@ export default function MockInterview() {
                   : `${wordCount} words`}
             </span>
             {voiceMessage ? (
-              <span className="text-xs text-amber-600 dark:text-amber-400">{voiceMessage}</span>
+              <span className="text-xs text-amber-700 dark:text-amber-400">{voiceMessage}</span>
             ) : null}
           </div>
         </div>
@@ -747,13 +747,13 @@ export default function MockInterview() {
             {answerStats ? (
               <div className="flex flex-wrap gap-3 text-sm">
                 <span className="inline-flex items-center gap-2 rounded-xl bg-slate-100 px-3 py-2 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
-                  <Timer className="h-4 w-4 text-slate-400" />
+                  <Timer className="h-4 w-4 text-slate-500 dark:text-slate-400" />
                   Answer time <strong>{formatTime(answerStats.seconds)}</strong>
-                  <span className="text-xs text-slate-400">(aim for 1–2 min)</span>
+                  <span className="text-xs text-slate-600 dark:text-slate-400">(aim for 1–2 min)</span>
                 </span>
                 {answerStats.wpm ? (
                   <span className="inline-flex items-center gap-2 rounded-xl bg-slate-100 px-3 py-2 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
-                    <Mic className="h-4 w-4 text-slate-400" />
+                    <Mic className="h-4 w-4 text-slate-500 dark:text-slate-400" />
                     Speaking pace <strong>{answerStats.wpm} wpm</strong>
                     <span className={`text-xs font-semibold ${describePace(answerStats.wpm).tone}`}>
                       {describePace(answerStats.wpm).label}
@@ -815,7 +815,7 @@ export default function MockInterview() {
         )}
       </div>
 
-      <p className="mt-6 text-center text-xs text-slate-400">
+      <p className="mt-6 text-center text-xs text-slate-500 dark:text-slate-400">
         Tip: structure your answer clearly, give a real example and finish with the result.{" "}
         <Link to="/dashboard" className="underline hover:text-slate-600 dark:hover:text-slate-300">
           View your dashboard
