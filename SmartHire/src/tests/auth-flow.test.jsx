@@ -23,9 +23,9 @@ describe("Auth page", () => {
   });
 
   test("submits login and navigates to home when session verification succeeds", async () => {
-    authFetch
-      .mockResolvedValueOnce({ ok: false })
-      .mockResolvedValueOnce({ ok: true });
+    // No stored token, so the page skips the initial session check and only
+    // verifies the session after logging in.
+    authFetch.mockResolvedValueOnce({ ok: true });
 
     axios.post.mockResolvedValue({
       data: { message: "Login successful" },
@@ -55,7 +55,7 @@ describe("Auth page", () => {
       email: "user@example.com",
       password: "abc12345",
     });
-    expect(authFetch).toHaveBeenCalledTimes(2);
+    expect(authFetch).toHaveBeenCalledTimes(1);
   });
 
   test("shows the google sign-in option on the login screen", async () => {
@@ -116,9 +116,7 @@ describe("Signup page", () => {
   });
 
   test("creates the account with name, email and password", async () => {
-    authFetch
-      .mockResolvedValueOnce({ ok: false })
-      .mockResolvedValueOnce({ ok: true });
+    authFetch.mockResolvedValueOnce({ ok: true });
     axios.post.mockResolvedValue({ data: { message: "Registration successful" } });
     renderSignup();
 

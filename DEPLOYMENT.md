@@ -13,6 +13,10 @@
 
 ## 2. Backend on Vercel (`smarthire-server`)
 
+`smarthire-server/vercel.json` pins the API to the **Mumbai (`bom1`)** region so it runs next to
+the Atlas cluster (also in Mumbai). If you create your Atlas cluster in another region, change
+`regions` to the closest Vercel region: every database query crosses that distance.
+
 Set these under **Project → Settings → Environment Variables**, then **redeploy**
 (Vercel only reads new variables on a new deployment):
 

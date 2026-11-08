@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { authFetch } from "../utils/authFetch";
 import { API_BASE_URL } from "../utils/apiBaseUrl";
+import PageLoader from "../components/app/PageLoader";
 
 export default function ProtectedRoute({ children }) {
   const location = useLocation();
@@ -37,10 +38,10 @@ export default function ProtectedRoute({ children }) {
     return () => {
       isMounted = false;
     };
-  }, [API_BASE_URL]);
+  }, []);
 
   if (isChecking) {
-    return <div className="p-6 text-gray-500 dark:text-slate-400">Checking authentication...</div>;
+    return <PageLoader label="Checking authentication..." />;
   }
 
   if (!isAuthorized) {

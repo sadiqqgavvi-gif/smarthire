@@ -286,7 +286,7 @@ export default function PracticeSession() {
             return (
               <li
                 key={q._id}
-                className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+                className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6 dark:border-slate-800 dark:bg-slate-900"
               >
                 <div className="flex items-start gap-4">
                   <span
@@ -362,7 +362,7 @@ export default function PracticeSession() {
                   className={
                     saveMessage.type === "error"
                       ? "text-red-600 dark:text-red-400"
-                      : "text-emerald-600 dark:text-emerald-400"
+                      : "text-emerald-700 dark:text-emerald-400"
                   }
                 >
                   {saveMessage.text}
@@ -387,7 +387,7 @@ export default function PracticeSession() {
                 type="button"
                 onClick={saveSession}
                 disabled={saving || saved || attempted === 0}
-                className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none"
+                className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none"
               >
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                 {saved ? "Saved" : saving ? "Saving..." : "Finish & save session"}

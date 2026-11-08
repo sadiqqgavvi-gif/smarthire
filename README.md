@@ -84,6 +84,14 @@
 - **Light and dark mode**, remembered per browser and defaulting to the system setting, with no flash on load.
 - Fully responsive from phone to desktop. All animation is disabled for users who prefer reduced motion.
 
+### Performance & quality
+- **Route-based code splitting:** the home page loads about 92 KB of gzipped JavaScript instead of 240 KB. The dashboard charts are only downloaded when you open the dashboard, and the sign-up page is prefetched while the browser is idle.
+- **Fast cold starts:** the 30,000-question bank is read from a 155 KB pre-parsed cache in about 60 ms instead of being parsed from Markdown, which took about 1 s. Picking questions samples them directly instead of shuffling 10,000 items, so a request takes under 1 ms instead of about 30 ms.
+- **Close to the data:** the API runs in Vercel's Mumbai region (`bom1`), next to the MongoDB Atlas cluster and to users in South Asia.
+- **Lighthouse:** 97–100 for performance, accessibility, best practices and SEO. Every page passes automated WCAG 2 AA checks (axe-core) in both light and dark mode.
+- **SEO and sharing:** meta description, Open Graph and Twitter cards with a share image, `robots.txt` and `sitemap.xml`.
+- **Installable:** a web app manifest with icons, so SmartHire can be added to the home screen. Long-lived caching for hashed assets, and security headers on Netlify.
+
 ### Engineering
 - **Resilient backend:** question routes keep working without the database by falling back to the bundled question bank, and `/health/ready` reports exactly why MongoDB is unavailable.
 - **Docker:** Docker Compose for the full stack, with a non-root backend image and an unprivileged Nginx frontend.
@@ -228,6 +236,7 @@ smarthire/
 │   ├── models/                      # User, Question, PracticeSession, Message
 │   ├── middleware/                  # auth, validation, rate limiting, observability
 │   ├── topics/                      # Markdown question banks + reference answers
+│   ├── data/                        # questionBank.json.gz (pre-parsed question bank cache)
 │   ├── python/                      # evaluate_answer.py (optional evaluator)
 │   └── tests/                       # Node test runner specs
 ├── screenshots/                     # Images used in this README
@@ -307,7 +316,7 @@ cd smarthire-server
 npm run build:practice
 ```
 
-`npm start` also runs this automatically. Use `npm run generate:questions` to regenerate the Markdown question banks.
+`npm start` also runs this automatically. Use `npm run generate:questions` to regenerate the Markdown question banks, then `npm run build:bank` to refresh the pre-parsed cache (`data/questionBank.json.gz`) that the API loads on startup. A test fails if the cache and the Markdown get out of sync.
 
 ## Environment Variables
 

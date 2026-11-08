@@ -173,7 +173,7 @@ function InterviewPreview() {
               <p className="text-xs text-slate-500 dark:text-slate-400">Behavioral · Question 3 of 5</p>
             </div>
           </div>
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-red-50 px-2.5 py-1 text-xs font-medium text-red-600 dark:bg-red-500/10 dark:text-red-400">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700 dark:bg-red-500/10 dark:text-red-400">
             <span className="h-1.5 w-1.5 rounded-full bg-red-500 motion-safe:animate-pulse" />
             Recording
           </span>

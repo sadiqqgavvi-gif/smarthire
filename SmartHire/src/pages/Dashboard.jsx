@@ -311,6 +311,7 @@ export default function Dashboard() {
         <button
           type="button"
           onClick={handleLogout}
+          aria-label="Logout"
           className="inline-flex h-10 items-center gap-2 rounded-xl bg-slate-900 px-4 text-sm font-medium text-white transition hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white"
         >
           <LogOut className="h-4 w-4" />

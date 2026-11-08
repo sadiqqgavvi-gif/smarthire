@@ -1,7 +1,8 @@
 {
+  "regions": ["bom1"],
   "functions": {
     "api/index.js": {
-      "includeFiles": "topics/**"
+      "includeFiles": "{topics/**,data/**}"
     }
   },
   "rewrites": [
