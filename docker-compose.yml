@@ -16,7 +16,7 @@ services:
 
   backend:
     build:
-      context: ./smarthire-server
+      context: ./server
       dockerfile: Dockerfile
     container_name: smarthire-backend
     restart: unless-stopped
@@ -67,7 +67,7 @@ services:
 
   frontend:
     build:
-      context: ./SmartHire
+      context: ./client
       dockerfile: Dockerfile
       args:
         VITE_API_URL: http://localhost:5000
