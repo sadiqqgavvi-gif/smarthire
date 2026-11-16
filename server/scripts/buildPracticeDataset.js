@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import dotenv from "dotenv";
 import mongoose from "mongoose";
 import Question from "../models/questionModel.js";
 import {
@@ -12,6 +13,12 @@ import { assignDifficulty } from "../utils/questionBank.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const BASE_PATH = path.resolve(__dirname, "../topics/en");
+
+// Without this the script ignored MONGO_URI from .env and always tried localhost, so it
+// could never seed a hosted cluster. The path is explicit because npm runs scripts from
+// the package root, but `node scripts/buildPracticeDataset.js` can be run from anywhere.
+dotenv.config({ path: path.resolve(__dirname, "../.env") });
+
 const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/smarthire";
 
 const getCategory = (filePath) => {
