@@ -40,3 +40,24 @@ test("other SRV DNS failures are reported as DNS problems", () => {
   const error = new Error("querySrv ECONNREFUSED _mongodb._tcp.cluster0.abcde.mongodb.net");
   assert.equal(describeDatabaseError(error).code, "DATABASE_DNS_FAILED");
 });
+
+test("the unreachable hint matches the target: local service vs Atlas dashboard", () => {
+  const error = new Error("connect ECONNREFUSED 127.0.0.1:27017");
+  error.name = "MongooseServerSelectionError";
+  const original = process.env.MONGO_URI;
+
+  try {
+    process.env.MONGO_URI = "mongodb://127.0.0.1:27017/smarthire";
+    const local = describeDatabaseError(error);
+    assert.equal(local.code, "DATABASE_UNREACHABLE");
+    assert.match(local.hint, /local MongoDB service/i);
+    assert.doesNotMatch(local.hint, /Network Access/i);
+
+    process.env.MONGO_URI = "mongodb+srv://user:pw@cluster1122.hraevyv.mongodb.net/smarthire";
+    const hosted = describeDatabaseError(error);
+    assert.match(hosted.hint, /Network Access/i);
+  } finally {
+    if (original === undefined) delete process.env.MONGO_URI;
+    else process.env.MONGO_URI = original;
+  }
+});

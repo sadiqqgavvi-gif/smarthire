@@ -99,7 +99,31 @@ buildDataset()
     process.exit(0);
   })
   .catch(async (error) => {
-    console.error("Dataset build failed:", error);
     await mongoose.disconnect().catch(() => {});
+
+    // Seeding MongoDB is an optional optimisation: the API also serves questions from the
+    // bundled question bank. This runs as a `prestart` hook, so failing hard here would stop
+    // the server from starting at all for anyone without a local MongoDB.
+    const isConnectionFailure =
+      error?.name === "MongooseServerSelectionError" ||
+      /ECONNREFUSED|ENOTFOUND|querySrv|timed out/i.test(error?.message || "");
+
+    if (isConnectionFailure) {
+      console.warn(
+        [
+          "",
+          "Skipping the question dataset build: MongoDB is not reachable.",
+          `  MONGO_URI: ${MONGO_URI.replace(/\/\/[^@]*@/, "//***@")}`,
+          "",
+          "  The server will still start and serve questions from the bundled question bank.",
+          "  Sign-up, login and the dashboard need a database, so start MongoDB (or point",
+          "  MONGO_URI at your Atlas cluster) and run `npm run build:practice` to seed it.",
+          "",
+        ].join("\n")
+      );
+      process.exit(0);
+    }
+
+    console.error("Dataset build failed:", error);
     process.exit(1);
   });
