@@ -298,6 +298,9 @@ This starts:
 
 **Backend.** Create `server/.env` (see [Environment Variables](#environment-variables)), then install and start:
 
+> Without a reachable MongoDB the server still starts and serves practice and mock interview
+> questions from the bundled question bank; sign-up, login and the dashboard need the database.
+
 ```bash
 cd server
 ```

@@ -84,10 +84,17 @@ export const describeDatabaseError = (error) => {
     text.includes("enotfound") ||
     text.includes("econnrefused")
   ) {
+    // A local URI and a hosted cluster fail for completely different reasons, so point at
+    // the right fix instead of sending local developers to the Atlas dashboard.
+    const uri = (process.env.MONGO_URI || process.env.MONGODB_URI || "").trim();
+    const isLocalTarget = !uri || /(localhost|127\.0\.0\.1|\[?::1]?)/i.test(uri);
+
     return {
       code: "DATABASE_UNREACHABLE",
       detail: networkCode || error.name || "",
-      hint: "The MongoDB cluster could not be reached. In MongoDB Atlas > Network Access, allow 0.0.0.0/0 (serverless hosts have changing IPs) and make sure the cluster is not paused.",
+      hint: isLocalTarget
+        ? "No MongoDB is running at the local address in MONGO_URI. Start your local MongoDB service, or set MONGO_URI to a MongoDB Atlas connection string."
+        : "The MongoDB cluster could not be reached. In MongoDB Atlas > Network Access, allow 0.0.0.0/0 (serverless hosts have changing IPs) and make sure the cluster is not paused.",
     };
   }
 
