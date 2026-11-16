@@ -20,21 +20,21 @@ jobs:
           node-version: "20"
           cache: "npm"
           cache-dependency-path: |
-            smarthire-server/package-lock.json
-            SmartHire/package-lock.json
+            server/package-lock.json
+            client/package-lock.json
 
       - name: Install backend dependencies
-        working-directory: smarthire-server
+        working-directory: server
         run: npm ci
 
       - name: Run backend tests
-        working-directory: smarthire-server
+        working-directory: server
         run: npm test
 
       - name: Install frontend dependencies
-        working-directory: SmartHire
+        working-directory: client
         run: npm ci
 
       - name: Run frontend tests
-        working-directory: SmartHire
+        working-directory: client
         run: npm test

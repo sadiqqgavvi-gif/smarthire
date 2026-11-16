@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="SmartHire/public/smarthire-logo.svg" alt="SmartHire logo" width="72" />
+<img src="client/public/smarthire-logo.svg" alt="SmartHire logo" width="72" />
 
 # SmartHire
 
@@ -14,7 +14,7 @@
 
 ### 🔗 [Try it live → smarrthire.netlify.app](https://smarrthire.netlify.app/)
 
-![SmartHire landing page](screenshots/01-hero-light.png)
+![SmartHire landing page](docs/screenshots/01-hero-light.png)
 
 </div>
 
@@ -105,45 +105,45 @@
 
 | Light mode | Dark mode |
 | --- | --- |
-| ![Hero, light mode](screenshots/01-hero-light.png) | ![Hero, dark mode](screenshots/02-hero-dark.png) |
+| ![Hero, light mode](docs/screenshots/01-hero-light.png) | ![Hero, dark mode](docs/screenshots/02-hero-dark.png) |
 
 | Features | Interview tracks |
 | --- | --- |
-| ![Features section](screenshots/03-features.png) | ![Practice tracks](screenshots/04-practice-tracks.png) |
+| ![Features section](docs/screenshots/03-features.png) | ![Practice tracks](docs/screenshots/04-practice-tracks.png) |
 
 | FAQ | Contact |
 | --- | --- |
-| ![FAQ](screenshots/14-faq.png) | ![Contact form](screenshots/15-contact.png) |
+| ![FAQ](docs/screenshots/14-faq.png) | ![Contact form](docs/screenshots/15-contact.png) |
 
-![Call to action](screenshots/16-final-cta.png)
+![Call to action](docs/screenshots/16-final-cta.png)
 
 ### Sign up & log in
 
 | Get started (sign up) | Log in (dark mode) |
 | --- | --- |
-| ![Sign up with Google or email](screenshots/05-signup.png) | ![Log in, dark mode](screenshots/06-login-dark.png) |
+| ![Sign up with Google or email](docs/screenshots/05-signup.png) | ![Log in, dark mode](docs/screenshots/06-login-dark.png) |
 
 ### Practice
 
 | Configure a session | Practice feedback with model answer |
 | --- | --- |
-| ![Configure practice](screenshots/07-configure.png) | ![Practice feedback](screenshots/08-practice-feedback.png) |
+| ![Configure practice](docs/screenshots/07-configure.png) | ![Practice feedback](docs/screenshots/08-practice-feedback.png) |
 
 ### Mock interview
 
 | Interview in progress | AI feedback (STAR answer) | Results |
 | --- | --- | --- |
-| ![Mock interview](screenshots/09-mock-interview.png) | ![Mock interview feedback](screenshots/10-mock-feedback.png) | ![Mock interview results](screenshots/11-mock-results.png) |
+| ![Mock interview](docs/screenshots/09-mock-interview.png) | ![Mock interview feedback](docs/screenshots/10-mock-feedback.png) | ![Mock interview results](docs/screenshots/11-mock-results.png) |
 
 ### Dashboard
 
 | Light mode | Dark mode |
 | --- | --- |
-| ![Dashboard](screenshots/12-dashboard.png) | ![Dashboard, dark mode](screenshots/13-dashboard-dark.png) |
+| ![Dashboard](docs/screenshots/12-dashboard.png) | ![Dashboard, dark mode](docs/screenshots/13-dashboard-dark.png) |
 
 ### Mobile
 
-<img src="screenshots/17-mobile.png" alt="SmartHire on a phone" width="300" />
+<img src="docs/screenshots/17-mobile.png" alt="SmartHire on a phone" width="300" />
 
 ## How Answer Evaluation Works
 
@@ -176,7 +176,7 @@ flowchart LR
 
 **5. Optional AI.** With `USE_AI=true` and an `OPENAI_API_KEY`, an OpenAI model writes the feedback. It also receives the reference answer and returns the same five criteria. If the call fails, the engine above is used automatically. An optional Python evaluator (`USE_PYTHON_EVALUATOR=true`) is also supported.
 
-Examples from the calibration tests (`smarthire-server/tests/smart.evaluator.test.js`):
+Examples from the calibration tests (`server/tests/smart.evaluator.test.js`):
 
 | Answer | Score |
 | --- | :-: |
@@ -215,35 +215,55 @@ Examples from the calibration tests (`smarthire-server/tests/smart.evaluator.tes
 
 ## Project Structure
 
+The repository is a monorepo with two independent apps — `client/` (React) and `server/`
+(Express) — plus the documentation. Each app has its own `package.json`, tests and Dockerfile,
+and can be installed, run and deployed on its own.
+
 ```
 smarthire/
-├── SmartHire/                       # React + Vite frontend
-│   ├── public/                      # Logo / favicon
-│   └── src/
-│       ├── components/              # Hero, TopicMarquee, Features, Practice, FAQ, Contact, FinalCTA, ThemeToggle
-│       │   ├── app/                 # AppHeader, FeedbackPanel, score tones, track metadata
-│       │   └── motion/              # Reveal (scroll animation), CountUp, useInView
-│       ├── layout/                  # Navbar, Footer
-│       ├── pages/                   # Auth, ConfigurePractice, PracticeSession, MockInterview, Dashboard
-│       ├── routes/                  # ProtectedRoute
-│       ├── theme/                   # ThemeProvider (light / dark mode)
-│       ├── utils/                   # authFetch, auth token fallback, error messages, session stats
-│       └── tests/                   # Vitest + Testing Library specs
-├── smarthire-server/                # Express + MongoDB backend
-│   ├── routes/ controllers/         # /api/auth, /api/questions, /api/practice, /api/mock, /api/ai, /api/contact
-│   ├── services/                    # smartEvaluator (scoring engine), aiEvaluationService, guardrails, python bridge
-│   ├── utils/                       # database, questionBank, referenceAnswers, questionExtractor
-│   ├── models/                      # User, Question, PracticeSession, Message
-│   ├── middleware/                  # auth, validation, rate limiting, observability
-│   ├── topics/                      # Markdown question banks + reference answers
-│   ├── data/                        # questionBank.json.gz (pre-parsed question bank cache)
-│   ├── python/                      # evaluate_answer.py (optional evaluator)
-│   └── tests/                       # Node test runner specs
-├── screenshots/                     # Images used in this README
-├── fyp_report_media/                # UML / architecture diagrams for the FYP report
-├── docker-compose.yml
-├── DEPLOYMENT.md                    # Atlas + Vercel + Netlify guide and troubleshooting
-└── .github/workflows/ci.yml
+├── client/                      # React + Vite frontend  →  Netlify
+│   ├── public/                  # Logo, app icons, manifest, robots.txt, sitemap.xml
+│   ├── src/
+│   │   ├── components/          # Landing sections: Hero, TopicMarquee, Features, Practice, FAQ, Contact, FinalCTA
+│   │   │   ├── app/             # Shared signed-in UI: AppHeader, FeedbackPanel, PageLoader, score tones, tracks
+│   │   │   └── motion/          # Scroll/animation helpers: Reveal, CountUp, useInView
+│   │   ├── layout/              # Navbar, Footer
+│   │   ├── pages/               # Auth, ConfigurePractice, PracticeSession, MockInterview, Dashboard, NotFound
+│   │   ├── routes/              # ProtectedRoute (auth guard)
+│   │   ├── theme/               # ThemeProvider: light / dark mode
+│   │   ├── utils/               # authFetch, access-token fallback, error messages, session stats
+│   │   └── tests/               # Vitest + Testing Library specs
+│   ├── Dockerfile, nginx.conf   # Production container (unprivileged Nginx)
+│   └── vite.config.js, tailwind.config.js, eslint.config.js
+│
+├── server/                      # Express + MongoDB backend  →  Vercel (serverless)
+│   ├── api/index.js             # Vercel entry point
+│   ├── server.js                # Local / Docker entry point
+│   ├── app.js                   # Express app: middleware, routes, health checks
+│   ├── routes/                  # /api/auth, /api/questions, /api/practice, /api/mock, /api/ai, /api/contact
+│   ├── controllers/             # Route handlers
+│   ├── services/                # smartEvaluator (scoring engine), aiEvaluationService, guardrails, Python bridge
+│   ├── models/                  # User, Question, PracticeSession, Message
+│   ├── middleware/              # auth, validation, rate limiting, observability
+│   ├── utils/                   # database, questionBank, referenceAnswers, questionExtractor, logger
+│   ├── topics/en/               # Markdown question banks + reference answers (source of truth)
+│   ├── data/                    # questionBank.json.gz — pre-parsed cache built from topics/en
+│   ├── scripts/                 # Dataset + cache build scripts
+│   ├── python/                  # evaluate_answer.py (optional evaluator)
+│   ├── tests/                   # Node test runner specs
+│   └── Dockerfile
+│
+├── docs/
+│   ├── DEPLOYMENT.md            # Atlas + Vercel + Netlify guide and troubleshooting
+│   ├── screenshots/             # Images used in this README
+│   └── fyp/                     # Final Year Project material
+│       ├── SmartHire_UML_Diagrams.docx
+│       ├── diagrams/            # Architecture + UML figures
+│       └── tools/               # Python scripts that generate the diagrams and report
+│
+├── .github/workflows/ci.yml     # Installs + tests both apps on every push
+├── docker-compose.yml           # MongoDB + server + client, one command
+└── netlify.toml                 # Frontend build, caching and security headers
 ```
 
 ## Getting Started
@@ -276,10 +296,10 @@ This starts:
 
 ### 3. Manual setup
 
-**Backend.** Create `smarthire-server/.env` (see [Environment Variables](#environment-variables)), then install and start:
+**Backend.** Create `server/.env` (see [Environment Variables](#environment-variables)), then install and start:
 
 ```bash
-cd smarthire-server
+cd server
 ```
 
 ```bash
@@ -290,10 +310,10 @@ npm install
 npm start
 ```
 
-**Frontend.** Create `SmartHire/.env`, then install and start the dev server:
+**Frontend.** Create `client/.env`, then install and start the dev server:
 
 ```bash
-cd SmartHire
+cd client
 ```
 
 ```bash
@@ -309,7 +329,7 @@ Open `http://localhost:5173`.
 ### Rebuild the question dataset (optional)
 
 ```bash
-cd smarthire-server
+cd server
 ```
 
 ```bash
@@ -320,7 +340,7 @@ npm run build:practice
 
 ## Environment Variables
 
-**Backend (`smarthire-server/.env`)**
+**Backend (`server/.env`)**
 
 | Variable | Required | Description |
 | --- | :-: | --- |
@@ -334,7 +354,7 @@ npm run build:practice
 | `USE_PYTHON_EVALUATOR`, `PYTHON_BIN` | | Optional Python evaluator |
 | `PORT` | | API port (default `5000`) |
 
-**Frontend (`SmartHire/.env`)**
+**Frontend (`client/.env`)**
 
 | Variable | Description |
 | --- | --- |
@@ -367,7 +387,7 @@ Question and evaluation routes keep working if MongoDB is unavailable: they use 
 ## Testing
 
 ```bash
-cd smarthire-server
+cd server
 ```
 
 ```bash
@@ -375,7 +395,7 @@ npm test
 ```
 
 ```bash
-cd SmartHire
+cd client
 ```
 
 ```bash
@@ -405,9 +425,9 @@ GitHub Actions runs both suites on every push and pull request.
 ## Deployment
 
 - **Docker Compose:** MongoDB, the backend and an Nginx-served frontend in one command. Good for a VPS or a local demo.
-- **Free tier (live setup):** MongoDB Atlas, the backend on Vercel (`smarthire-server/api/index.js`) and the frontend on Netlify.
+- **Free tier (live setup):** MongoDB Atlas, the backend on Vercel (`server/api/index.js`) and the frontend on Netlify.
 
-[`DEPLOYMENT.md`](./DEPLOYMENT.md) has the step-by-step setup, the environment variables for each platform, and a troubleshooting table for every `/health/ready` reason (for example a paused Atlas cluster).
+[`docs/DEPLOYMENT.md`](./docs/DEPLOYMENT.md) has the step-by-step setup, the environment variables for each platform, and a troubleshooting table for every `/health/ready` reason (for example a paused Atlas cluster).
 
 ## Roadmap
 
@@ -420,7 +440,7 @@ GitHub Actions runs both suites on every push and pull request.
 
 ## About This Project
 
-SmartHire began as a Final Year Project (BS Software Engineering) by **Gavriel Sadiq**, supervised by Ms. Iram Rubab, Department of Software Engineering, PMAS-Arid Agriculture University Rawalpindi. The UML diagrams (`SmartHire_UML_Diagrams.docx`) and architecture figures (`fyp_report_media/`) are included in the repository.
+SmartHire began as a Final Year Project (BS Software Engineering) by **Gavriel Sadiq**, supervised by Ms. Iram Rubab, Department of Software Engineering, PMAS-Arid Agriculture University Rawalpindi. The UML diagrams, architecture figures and the scripts that generate them are in [`docs/fyp/`](./docs/fyp).
 
 ## License
 
