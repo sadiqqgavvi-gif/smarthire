@@ -7,12 +7,12 @@
 **Your AI interview coach.** Practice real technical, behavioral and situational interview questions, answer by voice or text, and get instant, specific feedback on what to improve.
 
 [![CI](https://github.com/sadiqqgavvi-gif/smarthire/actions/workflows/ci.yml/badge.svg)](https://github.com/sadiqqgavvi-gif/smarthire/actions/workflows/ci.yml)
-[![Live demo](https://img.shields.io/badge/live%20demo-smarrthire.netlify.app-2563eb)](https://smarrthire.netlify.app/)
+[![Live demo](https://img.shields.io/badge/live%20demo-smarthire--prep.vercel.app-2563eb)](https://smarthire-prep.vercel.app/)
 ![React](https://img.shields.io/badge/React-19-61dafb?logo=react&logoColor=white)
 ![Node.js](https://img.shields.io/badge/Node.js-Express%205-339933?logo=node.js&logoColor=white)
 ![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-47a248?logo=mongodb&logoColor=white)
 
-### 🔗 [Try it live → smarrthire.netlify.app](https://smarrthire.netlify.app/)
+### 🔗 [Try it live → smarthire-prep.vercel.app](https://smarthire-prep.vercel.app/)
 
 ![SmartHire landing page](docs/screenshots/01-hero-light.png)
 
@@ -90,7 +90,7 @@
 - **Close to the data:** the API runs in Vercel's Mumbai region (`bom1`), next to the MongoDB Atlas cluster and to users in South Asia.
 - **Lighthouse:** 97–100 for performance, accessibility, best practices and SEO. Every page passes automated WCAG 2 AA checks (axe-core) in both light and dark mode.
 - **SEO and sharing:** meta description, Open Graph and Twitter cards with a share image, `robots.txt` and `sitemap.xml`.
-- **Installable:** a web app manifest with icons, so SmartHire can be added to the home screen. Long-lived caching for hashed assets, and security headers on Netlify.
+- **Installable:** a web app manifest with icons, so SmartHire can be added to the home screen. Long-lived caching for hashed assets, and security headers (`client/vercel.json`).
 
 ### Engineering
 - **Resilient backend:** question routes keep working without the database by falling back to the bundled question bank, and `/health/ready` reports exactly why MongoDB is unavailable.
@@ -209,8 +209,7 @@ Examples from the calibration tests (`server/tests/smart.evaluator.test.js`):
 **DevOps**
 - Docker + Docker Compose
 - GitHub Actions CI
-- Netlify (frontend)
-- Vercel serverless (backend)
+- Vercel: static frontend + serverless backend (Mumbai region)
 - MongoDB Atlas
 
 ## Project Structure
@@ -221,7 +220,7 @@ and can be installed, run and deployed on its own.
 
 ```
 smarthire/
-├── client/                      # React + Vite frontend  →  Netlify
+├── client/                      # React + Vite frontend  →  Vercel
 │   ├── public/                  # Logo, app icons, manifest, robots.txt, sitemap.xml
 │   ├── src/
 │   │   ├── components/          # Landing sections: Hero, TopicMarquee, Features, Practice, FAQ, Contact, FinalCTA
@@ -254,7 +253,7 @@ smarthire/
 │   └── Dockerfile
 │
 ├── docs/
-│   ├── DEPLOYMENT.md            # Atlas + Vercel + Netlify guide and troubleshooting
+│   ├── DEPLOYMENT.md            # Atlas + Vercel guide and troubleshooting
 │   ├── screenshots/             # Images used in this README
 │   └── fyp/                     # Final Year Project material
 │       ├── SmartHire_UML_Diagrams.docx
@@ -262,8 +261,7 @@ smarthire/
 │       └── tools/               # Python scripts that generate the diagrams and report
 │
 ├── .github/workflows/ci.yml     # Installs + tests both apps on every push
-├── docker-compose.yml           # MongoDB + server + client, one command
-└── netlify.toml                 # Frontend build, caching and security headers
+└── docker-compose.yml           # MongoDB + server + client, one command
 ```
 
 ## Getting Started
@@ -428,7 +426,7 @@ GitHub Actions runs both suites on every push and pull request.
 ## Deployment
 
 - **Docker Compose:** MongoDB, the backend and an Nginx-served frontend in one command. Good for a VPS or a local demo.
-- **Free tier (live setup):** MongoDB Atlas, the backend on Vercel (`server/api/index.js`) and the frontend on Netlify.
+- **Free tier (live setup):** MongoDB Atlas plus two Vercel projects from this repo: the frontend (Root Directory `client`) and the API as a serverless function (Root Directory `server`, entry `server/api/index.js`).
 
 [`docs/DEPLOYMENT.md`](./docs/DEPLOYMENT.md) has the step-by-step setup, the environment variables for each platform, and a troubleshooting table for every `/health/ready` reason (for example a paused Atlas cluster).
 

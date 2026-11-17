@@ -4,4 +4,4 @@ Disallow: /dashboard
 Disallow: /practice/
 Disallow: /mock-interview/
 
-Sitemap: https://smarrthire.netlify.app/sitemap.xml
+Sitemap: https://smarthire-prep.vercel.app/sitemap.xml
