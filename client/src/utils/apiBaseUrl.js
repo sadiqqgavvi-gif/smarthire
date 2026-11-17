@@ -7,6 +7,13 @@ const resolveApiBaseUrl = () => {
   const browserHost = window.location.hostname;
 
   if (!envUrl) {
+    if (import.meta.env.PROD) {
+      // A deployed build without VITE_API_URL would quietly call port 5000 on its own host.
+      console.error(
+        "VITE_API_URL is not set for this build, so API requests will fail. " +
+          "Add it in the hosting provider's environment variables and redeploy."
+      );
+    }
     return `${window.location.protocol}//${browserHost}:5000`;
   }
 
