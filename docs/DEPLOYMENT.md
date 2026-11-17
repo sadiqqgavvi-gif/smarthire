@@ -1,4 +1,4 @@
-# Deploying SmartHire (MongoDB Atlas + Vercel + Netlify)
+# Deploying SmartHire (MongoDB Atlas + Vercel)
 
 ## 1. MongoDB Atlas
 
@@ -29,14 +29,15 @@ Set these under **Project → Settings → Environment Variables**, then **redep
 | `JWT_SECRET` | long random string | Required for login. |
 | `ACCESS_TOKEN_SECRET` / `REFRESH_TOKEN_SECRET` | long random strings | Optional; fall back to `JWT_SECRET`. |
 | `GOOGLE_CLIENT_ID` | `xxxx.apps.googleusercontent.com` | Must be the **same** client ID as the frontend. |
-| `CLIENT_ORIGINS` | `https://smarrthire.netlify.app` | Comma-separated frontend URLs, no trailing slash. |
+| `CLIENT_ORIGINS` | `https://smarthire-prep.vercel.app` | Comma-separated frontend URLs, no trailing slash. |
 | `NODE_ENV` | `production` | Enables cross-site (`SameSite=None; Secure`) cookies. |
 | `OPENAI_API_KEY` | `sk-...` | Optional, for AI evaluation. |
 
-## 3. Frontend on Netlify (`client/`)
+## 3. Frontend on Vercel (`client/`)
 
-`netlify.toml` already points Netlify at the `client` folder, so there is nothing to
-configure by hand. Only the two variables below are needed:
+Create a **second** Vercel project from the same repository and set **Root Directory** to
+`client`. `client/vercel.json` already sets the Vite build, page routing, caching and security
+headers, so leave the build settings as detected. Only the two variables below are needed:
 
 
 | Variable | Example |
@@ -50,7 +51,7 @@ Vite bakes these values in at build time, so trigger a new deploy after changing
 
 Under **APIs & Services → Credentials → your OAuth 2.0 Client ID → Authorized JavaScript origins**, add:
 
-- `https://smarrthire.netlify.app`
+- `https://smarthire-prep.vercel.app`
 - `http://localhost:5173` (for local development)
 
 ## Troubleshooting

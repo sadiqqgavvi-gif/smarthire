@@ -25,7 +25,7 @@ const parseCookies = (cookieHeader = "") =>
 const hashToken = (token) =>
   crypto.createHash("sha256").update(token).digest("hex");
 
-// Frontend (Netlify) and backend (Vercel) live on different domains in production,
+// Frontend and backend are separate *.vercel.app sites (vercel.app is a public suffix),
 // so cookies must be SameSite=None; Secure there. Vercel always serves over HTTPS.
 const isProd = process.env.NODE_ENV === "production" || Boolean(process.env.VERCEL);
 const cookieSameSite = isProd ? "none" : "lax";
