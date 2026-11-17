@@ -336,13 +336,12 @@ export default function Dashboard() {
           </div>
 
           <div className="flex flex-wrap gap-3">
-            <a
-              href="/#practice"
+            <Link to="/#practice"
               className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700"
             >
               <BookOpenCheck className="h-4 w-4" />
               Start practicing
-            </a>
+            </Link>
             <Link
               to="/practice/behavioral/configure"
               className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
@@ -369,12 +368,11 @@ export default function Dashboard() {
                 Complete and save a practice session or mock interview to see your scores and progress here.
               </p>
             </div>
-            <a
-              href="/#practice"
+            <Link to="/#practice"
               className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
             >
               Choose a track
-            </a>
+            </Link>
           </div>
         ) : null}
 
