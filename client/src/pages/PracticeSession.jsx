@@ -6,6 +6,7 @@ import { API_BASE_URL } from "../utils/apiBaseUrl";
 import AppHeader from "../components/app/AppHeader";
 import FeedbackPanel from "../components/app/FeedbackPanel";
 import { getTrack } from "../components/app/tracks";
+import { useGoBack } from "../utils/navigation";
 import { toScore } from "../components/app/scoreTone";
 
 const MIN_ANSWER_LENGTH = 10;
@@ -19,6 +20,7 @@ export default function PracticeSession() {
   const category = decodeURIComponent(type);
   const track = getTrack(type);
   const isBehavioral = category.toLowerCase() === "behavioral";
+  const goBack = useGoBack(`/practice/${type}/configure`);
 
   const difficulty = searchParams.get("difficulty"); // keep original casing for the API
   const count = searchParams.get("count") || 3;
@@ -184,7 +186,7 @@ export default function PracticeSession() {
       <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
         <button
           type="button"
-          onClick={() => navigate(-1)}
+          onClick={goBack}
           className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
         >
           <ArrowLeft className="h-4 w-4" />
@@ -267,9 +269,9 @@ export default function PracticeSession() {
         {!fetching && !error && questions.length === 0 ? (
           <div className="mt-8 rounded-3xl border border-dashed border-slate-300 bg-white p-10 text-center dark:border-slate-700 dark:bg-slate-900">
             <p className="font-semibold text-slate-900 dark:text-white">No questions found for this category.</p>
-            <a href="/#practice" className="mt-3 inline-block text-sm font-semibold text-blue-600 hover:underline dark:text-blue-400">
+            <Link to="/#practice" className="mt-3 inline-block text-sm font-semibold text-blue-600 hover:underline dark:text-blue-400">
               Choose another track
-            </a>
+            </Link>
           </div>
         ) : null}
 

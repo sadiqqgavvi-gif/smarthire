@@ -22,6 +22,7 @@ import { API_BASE_URL } from "../utils/apiBaseUrl";
 import AppHeader from "../components/app/AppHeader";
 import FeedbackPanel from "../components/app/FeedbackPanel";
 import { getTrack } from "../components/app/tracks";
+import { useGoBack } from "../utils/navigation";
 import { getScoreTone, toScore } from "../components/app/scoreTone";
 
 const formatTime = (seconds) => {
@@ -50,6 +51,7 @@ export default function MockInterview() {
   const navigate = useNavigate();
   const location = useLocation();
   const track = getTrack(type);
+  const goBack = useGoBack(`/practice/${type}/configure`);
 
   const count = searchParams.get("count") || 10;
   const difficulty = searchParams.get("difficulty")?.toLowerCase() || "medium";
@@ -454,9 +456,9 @@ export default function MockInterview() {
               Try again
             </button>
           ) : null}
-          <a href="/#practice" className={secondaryButton}>
+          <Link to="/#practice" className={secondaryButton}>
             All tracks
-          </a>
+          </Link>
         </div>
       </div>
     );
@@ -556,7 +558,7 @@ export default function MockInterview() {
               <BarChart3 className="h-4 w-4" />
               View dashboard
             </button>
-            <button type="button" onClick={() => navigate(-1)} className={secondaryButton}>
+            <button type="button" onClick={goBack} className={secondaryButton}>
               <ArrowLeft className="h-4 w-4" />
               Back
             </button>
@@ -577,7 +579,7 @@ export default function MockInterview() {
       <div className="flex items-center justify-between gap-4">
         <button
           type="button"
-          onClick={() => navigate(-1)}
+          onClick={goBack}
           className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
         >
           <ArrowLeft className="h-4 w-4" />

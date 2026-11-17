@@ -14,6 +14,7 @@ import Contact from "./components/Contact";
 import Footer from "./layout/Footer";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import PageLoader from "./components/app/PageLoader";
+import ScrollManager from "./components/app/ScrollManager";
 
 const loadAuth = () => import("./pages/Auth");
 const Auth = lazy(loadAuth);
@@ -52,6 +53,7 @@ function Home() {
 export default function App() {
   return (
     <Suspense fallback={<PageLoader />}>
+      <ScrollManager />
       <Routes>
         <Route path="/" element={<Home />} />
 

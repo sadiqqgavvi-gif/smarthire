@@ -1,5 +1,5 @@
 import { createElement, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, ArrowRight, BookOpenCheck, CheckCircle2, Info, Mic } from "lucide-react";
 import AppHeader from "../components/app/AppHeader";
 import { getTrack } from "../components/app/tracks";
@@ -65,13 +65,12 @@ export default function ConfigurePractice() {
       <AppHeader />
 
       <main className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
-        <a
-          href="/#practice"
+        <Link to="/#practice"
           className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
         >
           <ArrowLeft className="h-4 w-4" />
-          All tracks
-        </a>
+          Back to all tracks
+        </Link>
 
         <div className="mt-6 flex items-start gap-4">
           <div

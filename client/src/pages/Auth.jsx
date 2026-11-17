@@ -15,7 +15,8 @@ import {
   CheckCircle2,
   LayoutDashboard,
 } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { getRedirectAfterLogin, useGoBack } from "../utils/navigation";
 import { authFetch, logoutUser } from "../utils/authFetch";
 import { API_BASE_URL } from "../utils/apiBaseUrl";
 import { getAccessToken, setAccessToken } from "../utils/authToken";
@@ -74,6 +75,14 @@ export default function Auth({ type }) {
 
   const googleButtonRef = useRef(null);
   const navigate = useNavigate();
+  const location = useLocation();
+  const goBack = useGoBack("/");
+  // A protected page (e.g. a practice track) sends visitors here with `state.from`;
+  // after signing in they continue to that page instead of starting over on the home page.
+  const redirectTo = getRedirectAfterLogin(location.state);
+  // The Google callback is registered once, so it reads the target through a ref.
+  const redirectRef = useRef(redirectTo);
+  redirectRef.current = redirectTo;
   const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
   useEffect(() => {
@@ -144,7 +153,7 @@ export default function Auth({ type }) {
               throw new Error("Session validation failed. Please try again.");
             }
 
-            navigate("/", { replace: true });
+            navigate(redirectRef.current, { replace: true });
           } catch (err) {
             showMessage(getAuthErrorMessage(err, "Google login failed"), "error");
           } finally {
@@ -213,13 +222,7 @@ export default function Auth({ type }) {
     }
   };
 
-  const handleBack = () => {
-    if (window.history.length > 1) {
-      navigate(-1);
-      return;
-    }
-    navigate("/", { replace: true });
-  };
+  const handleBack = goBack;
 
   const verifySessionAndRedirect = async (successMessage, redirectTo) => {
     showMessage(successMessage, "success");
@@ -267,10 +270,10 @@ export default function Auth({ type }) {
       const res = await axios.post(url, payload, { withCredentials: true });
       setAccessToken(res.data?.accessToken);
 
-      // Registration also signs the user in, so both flows land on the home page.
+      // Registration also signs the user in, so both flows continue to the same place.
       await verifySessionAndRedirect(
         res.data?.message || (isSignup ? "Registration successful" : "Login successful"),
-        "/"
+        redirectTo
       );
     } catch (err) {
       showMessage(getAuthErrorMessage(err), "error");
@@ -350,6 +353,7 @@ export default function Auth({ type }) {
                     key={tab.key}
                     to={tab.to}
                     replace
+                    state={location.state}
                     role="tab"
                     aria-selected={active}
                     className={`rounded-lg px-4 py-2 text-center transition ${
