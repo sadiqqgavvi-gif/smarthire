@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { expiredSaveLoginState, stashPendingSession } from "../utils/pendingSession";
 import { getClientErrorMessage } from "../utils/apiErrors";
+import { revealElement, scrollToTop } from "../utils/reveal";
 import { authFetch } from "../utils/authFetch";
 import { API_BASE_URL } from "../utils/apiBaseUrl";
 import AppHeader from "../components/app/AppHeader";
@@ -103,6 +104,17 @@ export default function MockInterview() {
     setElapsed(0);
     setAnswerStats(null);
   }, [current, questions.length]);
+
+  // Each new question (and the final summary) starts at the top of the page, where the
+  // question number and progress are, instead of where the last feedback was read.
+  const isFirstQuestionRender = useRef(true);
+  useEffect(() => {
+    if (isFirstQuestionRender.current) {
+      isFirstQuestionRender.current = false;
+      return;
+    }
+    scrollToTop();
+  }, [current]);
 
   useEffect(() => {
     if (loading || feedback || current >= questions.length) return undefined;
@@ -290,6 +302,7 @@ export default function MockInterview() {
           : null;
       setAnswerStats({ seconds, wpm });
       setFeedback(data.evaluation);
+      revealElement("mock-feedback");
       setResults((prev) => [
         ...prev,
         {
@@ -432,7 +445,7 @@ export default function MockInterview() {
   const shell = (content) => (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
       <AppHeader />
-      <main className="mx-auto max-w-3xl px-4 py-10 sm:px-6">{content}</main>
+      <main className="mx-auto max-w-3xl px-4 py-6 sm:px-6 sm:py-8">{content}</main>
     </div>
   );
 
@@ -463,7 +476,7 @@ export default function MockInterview() {
               Try again
             </button>
           ) : null}
-          <Link to="/#practice" className={secondaryButton}>
+          <Link to="/#tracks" className={secondaryButton}>
             All tracks
           </Link>
         </div>
@@ -599,7 +612,7 @@ export default function MockInterview() {
       </div>
 
       {/* Progress */}
-      <div className="mt-6">
+      <div className="mt-4">
         <div className="flex justify-between text-sm font-medium text-slate-600 dark:text-slate-300">
           <span>
             Question {current + 1} of {questions.length}
@@ -625,7 +638,7 @@ export default function MockInterview() {
         </div>
       </div>
 
-      <div className="mt-6 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-8 dark:border-slate-800 dark:bg-slate-900">
+      <div className="mt-5 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6 dark:border-slate-800 dark:bg-slate-900">
         {/* Question */}
         <div className="flex items-start gap-4">
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-purple-600 text-white">
@@ -651,7 +664,7 @@ export default function MockInterview() {
         </div>
 
         {/* Answer */}
-        <div className="mt-6">
+        <div className="mt-5">
           <div
             className={`rounded-2xl border transition ${
               listening
@@ -666,7 +679,7 @@ export default function MockInterview() {
               disabled={Boolean(feedback)}
               placeholder="Speak naturally as if the interviewer is listening, or type your answer..."
               aria-label="Your answer"
-              className="h-40 w-full resize-y rounded-2xl bg-transparent p-4 text-sm leading-6 text-slate-900 outline-none placeholder:text-slate-400 disabled:opacity-70 dark:text-slate-100 dark:placeholder:text-slate-500"
+              className="h-36 w-full resize-y rounded-2xl bg-transparent p-4 text-sm leading-6 text-slate-900 outline-none placeholder:text-slate-400 disabled:opacity-70 dark:text-slate-100 dark:placeholder:text-slate-500"
             />
             {interimTranscript ? (
               <p className="px-4 pb-3 text-sm italic text-slate-500 dark:text-slate-400">{interimTranscript}…</p>
@@ -726,7 +739,8 @@ export default function MockInterview() {
 
         {/* Actions / feedback */}
         {!feedback ? (
-          <div className="mt-6 flex flex-col-reverse gap-3 border-t border-slate-200 pt-6 sm:flex-row sm:items-center sm:justify-between dark:border-slate-800">
+          // Sticky so "Submit answer" stays on screen while the user types on a short screen.
+          <div className="sticky bottom-0 -mx-4 -mb-4 mt-5 flex flex-col-reverse gap-3 rounded-b-3xl border-t border-slate-200 bg-white/95 px-4 py-4 backdrop-blur sm:-mx-6 sm:-mb-6 sm:flex-row sm:items-center sm:justify-between sm:px-6 dark:border-slate-800 dark:bg-slate-900/95">
             <button
               type="button"
               onClick={skipQuestion}
@@ -753,7 +767,7 @@ export default function MockInterview() {
             </button>
           </div>
         ) : (
-          <div className="mt-6 space-y-5">
+          <div id="mock-feedback" className="mt-6 scroll-mt-20 space-y-5">
             {answerStats ? (
               <div className="flex flex-wrap gap-3 text-sm">
                 <span className="inline-flex items-center gap-2 rounded-xl bg-slate-100 px-3 py-2 text-slate-700 dark:bg-slate-800 dark:text-slate-200">

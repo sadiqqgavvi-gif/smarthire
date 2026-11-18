@@ -44,7 +44,7 @@ export default function Practice() {
   return (
     <section
       id="practice"
-      className="scroll-mt-20 bg-white px-4 py-24 sm:px-6 lg:px-8 dark:bg-slate-950"
+      className="scroll-mt-16 bg-white px-4 py-24 sm:px-6 lg:px-8 dark:bg-slate-950"
     >
       <div className="mx-auto max-w-7xl">
         <Reveal className="mx-auto max-w-2xl text-center">
@@ -60,7 +60,8 @@ export default function Practice() {
           </p>
         </Reveal>
 
-        <div className="mt-16 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {/* "Back to all tracks" lands here, so the track cards (not the heading) fill the screen. */}
+        <div id="tracks" className="mt-16 grid scroll-mt-24 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {PRACTICE_TRACKS.map((track, index) => {
             const Icon = track.icon;
             return (

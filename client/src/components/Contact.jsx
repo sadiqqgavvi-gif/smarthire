@@ -92,7 +92,7 @@ export default function Contact() {
   return (
     <section
       id="contact"
-      className="scroll-mt-20 bg-white px-4 py-24 sm:px-6 lg:px-8 dark:bg-slate-950"
+      className="scroll-mt-16 bg-white px-4 py-24 sm:px-6 lg:px-8 dark:bg-slate-950"
     >
       <div className="mx-auto grid max-w-6xl gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16">
         <Reveal>

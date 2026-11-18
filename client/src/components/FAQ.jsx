@@ -42,7 +42,7 @@ export default function FAQ() {
   return (
     <section
       id="faq"
-      className="scroll-mt-20 bg-slate-50 px-4 py-24 sm:px-6 lg:px-8 dark:bg-slate-900/60"
+      className="scroll-mt-16 bg-slate-50 px-4 py-24 sm:px-6 lg:px-8 dark:bg-slate-900/60"
     >
       <div className="mx-auto grid max-w-7xl gap-12 lg:grid-cols-[0.8fr_1.2fr]">
         <Reveal>

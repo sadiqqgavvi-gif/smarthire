@@ -3,7 +3,7 @@ import { useLocation, useNavigationType } from "react-router-dom";
 
 // Scroll behaviour for a single-page app, matching what users expect from normal websites:
 //  - a link to another page opens it at the top (SPA navigation keeps the old scroll otherwise);
-//  - a link with a hash, e.g. "/#practice", lands on that section, even from another page
+//  - a link with a hash, e.g. "/#tracks", lands on that section, even from another page
 //    or on a fresh load, where the section only exists after React has rendered it;
 //  - the browser Back/Forward buttons keep the browser's own scroll restoration.
 const HASH_RETRY_MS = 1500;

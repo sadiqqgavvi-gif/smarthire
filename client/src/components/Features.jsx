@@ -46,7 +46,7 @@ export default function Features() {
   return (
     <section
       id="features"
-      className="scroll-mt-20 bg-slate-50 px-4 py-24 sm:px-6 lg:px-8 dark:bg-slate-900/60"
+      className="scroll-mt-16 bg-slate-50 px-4 py-24 sm:px-6 lg:px-8 dark:bg-slate-900/60"
     >
       <div className="mx-auto max-w-7xl">
         <Reveal className="mx-auto max-w-2xl text-center">

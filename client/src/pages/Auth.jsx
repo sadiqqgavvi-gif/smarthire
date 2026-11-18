@@ -298,7 +298,7 @@ export default function Auth({ type }) {
   const updateField = (field) => (e) => setForm({ ...form, [field]: e.target.value });
 
   return (
-    <div className="min-h-screen bg-slate-100 px-4 pb-8 pt-20 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+    <div className="min-h-screen bg-slate-100 px-4 pb-8 pt-16 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
       <button
         onClick={handleBack}
         className="absolute left-4 top-4 inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 sm:left-6 sm:top-6 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
@@ -312,7 +312,7 @@ export default function Auth({ type }) {
         {isAuthenticated ? (
           <button
             onClick={handleLogout}
-            className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white"
+            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
           >
             <LogOut className="h-4 w-4" />
             Logout
@@ -320,9 +320,9 @@ export default function Auth({ type }) {
         ) : null}
       </div>
 
-      <div className="mx-auto flex min-h-[calc(100vh-7rem)] max-w-6xl items-center justify-center">
+      <div className="mx-auto flex min-h-[calc(100vh-6rem)] max-w-6xl items-center justify-center">
         <div className="grid w-full overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_20px_80px_rgba(15,23,42,0.12)] lg:grid-cols-[1.05fr_0.95fr] dark:border-slate-700 dark:bg-slate-900">
-          <div className="hidden flex-col justify-between bg-slate-950 p-10 text-white lg:flex">
+          <div className="hidden flex-col justify-between bg-slate-950 p-8 text-white lg:flex xl:p-10">
             <div>
               <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm text-slate-200">
                 <SparklesIcon />
@@ -342,11 +342,11 @@ export default function Auth({ type }) {
             </ul>
           </div>
 
-          <div className="p-6 sm:p-10">
+          <div className="p-6 sm:p-8">
             <div
               role="tablist"
               aria-label="Choose sign up or log in"
-              className="mb-6 grid grid-cols-2 rounded-xl bg-slate-100 p-1 text-sm font-medium dark:bg-slate-800"
+              className="mb-4 grid grid-cols-2 rounded-xl bg-slate-100 p-1 text-sm font-medium dark:bg-slate-800"
             >
               {[
                 { key: "signup", label: "Sign up", to: "/signup" },
@@ -373,7 +373,7 @@ export default function Auth({ type }) {
               })}
             </div>
 
-            <div className="mb-6">
+            <div className="mb-4">
               <h2 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl dark:text-slate-100">
                 {copy.title}
               </h2>
@@ -393,17 +393,17 @@ export default function Auth({ type }) {
               </div>
             ) : null}
 
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/60">
+            <div>
               {googleClientId ? (
                 <>
                   {/* colorScheme "light" keeps Google's iframe transparent; a dark page would otherwise
                       paint an opaque white box behind the button. */}
-                  <div ref={googleButtonRef} className="min-h-[44px]" style={{ colorScheme: "light" }} />
-                  <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
+                  <div ref={googleButtonRef} className={googleFailed ? "hidden" : "min-h-[44px]"} style={{ colorScheme: "light" }} />
+                  <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
                     {googleLoading
                       ? "Signing you in with Google..."
                       : googleFailed
-                        ? "Google sign-in couldn't load (a network or ad blocker may be blocking it). You can still log in with email and password."
+                        ? "Google sign-in couldn't load (a network or ad blocker may be blocking it). You can still use your email and password below."
                         : !googleReady
                         ? "Preparing Google sign-in..."
                         : copy.googleHint}
@@ -426,7 +426,7 @@ export default function Auth({ type }) {
               )}
             </div>
 
-            <div className="my-6 flex items-center gap-3">
+            <div className="my-5 flex items-center gap-3">
               <div className="h-px flex-1 bg-slate-200 dark:bg-slate-700" />
               <span className="text-xs font-medium uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
                 {copy.divider}
@@ -435,72 +435,78 @@ export default function Auth({ type }) {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              {isSignup ? (
-                <AuthField label="Full name" icon={User}>
+              {/* Sign-up fields sit in pairs so the whole form fits on a laptop screen. */}
+              <div className={isSignup ? "grid gap-4 sm:grid-cols-2" : ""}>
+                {isSignup ? (
+                  <AuthField label="Full name" icon={User}>
+                    <input
+                      type="text"
+                      placeholder="Optional"
+                      value={form.name}
+                      maxLength={80}
+                      autoComplete="name"
+                      onChange={updateField("name")}
+                      className="w-full bg-transparent outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
+                    />
+                  </AuthField>
+                ) : null}
+
+                <AuthField label="Email" icon={Mail}>
                   <input
-                    type="text"
-                    placeholder="Your name (optional)"
-                    value={form.name}
-                    maxLength={80}
-                    autoComplete="name"
-                    onChange={updateField("name")}
+                    type="email"
+                    placeholder="Email"
+                    value={form.email}
+                    required
+                    autoComplete="email"
+                    onChange={updateField("email")}
                     className="w-full bg-transparent outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
                   />
                 </AuthField>
-              ) : null}
+              </div>
 
-              <AuthField label="Email" icon={Mail}>
-                <input
-                  type="email"
-                  placeholder="Email"
-                  value={form.email}
-                  required
-                  autoComplete="email"
-                  onChange={updateField("email")}
-                  className="w-full bg-transparent outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
-                />
-              </AuthField>
+              <div className={isSignup ? "grid gap-4 sm:grid-cols-2" : ""}>
 
-              <AuthField
-                label="Password"
-                icon={LockKeyhole}
-                trailing={
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword((current) => !current)}
-                    aria-label={showPassword ? "Hide password" : "Show password"}
-                    className="text-slate-500 transition hover:text-slate-600 dark:hover:text-slate-200 dark:text-slate-400"
-                  >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                }
-              >
-                <input
-                  type={showPassword ? "text" : "password"}
-                  placeholder={isSignup ? "At least 6 characters" : "Password"}
-                  value={form.password}
-                  required
-                  minLength={6}
-                  autoComplete={isSignup ? "new-password" : "current-password"}
-                  onChange={updateField("password")}
-                  className="w-full bg-transparent outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
-                />
-              </AuthField>
-
-              {isSignup ? (
-                <AuthField label="Confirm password" icon={LockKeyhole}>
+                <AuthField
+                  label="Password"
+                  icon={LockKeyhole}
+                  trailing={
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((current) => !current)}
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                      className="text-slate-500 transition hover:text-slate-600 dark:hover:text-slate-200 dark:text-slate-400"
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  }
+                >
                   <input
                     type={showPassword ? "text" : "password"}
-                    placeholder="Re-enter your password"
-                    value={form.confirmPassword}
+                    placeholder={isSignup ? "6+ characters" : "Password"}
+                    value={form.password}
                     required
                     minLength={6}
-                    autoComplete="new-password"
-                    onChange={updateField("confirmPassword")}
+                    autoComplete={isSignup ? "new-password" : "current-password"}
+                    onChange={updateField("password")}
                     className="w-full bg-transparent outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
                   />
                 </AuthField>
-              ) : null}
+
+                {isSignup ? (
+                  <AuthField label="Confirm password" icon={LockKeyhole}>
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Re-enter password"
+                      value={form.confirmPassword}
+                      required
+                      minLength={6}
+                      autoComplete="new-password"
+                      onChange={updateField("confirmPassword")}
+                      className="w-full bg-transparent outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
+                    />
+                  </AuthField>
+                ) : null}
+              </div>
 
               <button
                 type="submit"
@@ -544,10 +550,10 @@ export default function Auth({ type }) {
 function AuthField({ label, icon, trailing = null, children }) {
   return (
     <label className="block">
-      <span className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
+      <span className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
         {label}
       </span>
-      <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 focus-within:border-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:focus-within:border-slate-500">
+      <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-2.5 focus-within:border-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:focus-within:border-slate-500">
         {createElement(icon, { className: "h-4 w-4 shrink-0 text-slate-500 dark:text-slate-400" })}
         {children}
         {trailing}
