@@ -1,3 +1,5 @@
+import { logError } from "./logger.js";
+
 export const notFound = (req, res) => {
   const message = `Route not found: ${req.method} ${req.originalUrl}`;
   const requestId = res.locals?.requestId;
@@ -12,20 +14,54 @@ export const notFound = (req, res) => {
   });
 };
 
-export const errorHandler = (err, req, res, next) => {
-  const statusCode = res.statusCode && res.statusCode !== 200 ? res.statusCode : 500;
+// Errors raised by express.json() before a route runs (see body-parser's `type` values).
+const BODY_PARSER_ERRORS = {
+  "entity.parse.failed": {
+    status: 400,
+    code: "INVALID_JSON",
+    message: "The request body is not valid JSON.",
+  },
+  "entity.too.large": {
+    status: 413,
+    code: "PAYLOAD_TOO_LARGE",
+    message: "The request is too large. Please shorten your answer and try again.",
+  },
+};
 
-  const isCorsError = typeof err?.message === "string" && err.message.startsWith("Blocked by CORS:");
-  const finalStatus = isCorsError ? 403 : statusCode;
+export const errorHandler = (err, req, res, _next) => {
   const requestId = res.locals?.requestId;
+  const isCorsError = typeof err?.message === "string" && err.message.startsWith("Blocked by CORS:");
+  const parserError = BODY_PARSER_ERRORS[err?.type];
 
-  res.status(finalStatus).json({
+  let status = Number(err?.status || err?.statusCode) || (res.statusCode !== 200 ? res.statusCode : 500);
+  let code = err?.code || "INTERNAL_SERVER_ERROR";
+  let message = err?.message || "Something went wrong";
+
+  if (parserError) {
+    ({ status, code, message } = parserError);
+  } else if (isCorsError) {
+    status = 403;
+    code = "CORS_BLOCKED";
+  }
+
+  if (status < 400 || status > 599) status = 500;
+
+  if (status >= 500) {
+    // Internal details (database, library errors) stay in the server log, not the response.
+    logError("unhandled_error", {
+      requestId,
+      method: req.method,
+      path: req.originalUrl,
+      error: err?.stack || String(err),
+    });
+    code = "INTERNAL_SERVER_ERROR";
+    message = "Something went wrong on our side. Please try again.";
+  }
+
+  res.status(status).json({
     success: false,
     ...(requestId ? { requestId } : {}),
-    message: err?.message || "Something went wrong",
-    error: {
-      code: isCorsError ? "CORS_BLOCKED" : err?.code || "INTERNAL_SERVER_ERROR",
-      message: err?.message || "Something went wrong",
-    },
+    message,
+    error: { code, message },
   });
 };

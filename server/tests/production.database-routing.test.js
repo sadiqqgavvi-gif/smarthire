@@ -8,8 +8,8 @@ let baseUrl;
 
 before(async () => {
   process.env.VERCEL = "1";
-  delete process.env.MONGO_URI;
-  delete process.env.MONGODB_URI;
+  process.env.MONGO_URI = ""; // empty, not deleted: dotenv would refill a deleted key from a local .env
+  process.env.MONGODB_URI = "";
   process.env.LOG_HTTP_REQUESTS = "false";
 
   const { default: app } = await import("../app.js");

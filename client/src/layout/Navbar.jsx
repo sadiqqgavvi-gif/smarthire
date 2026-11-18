@@ -37,6 +37,16 @@ export default function Navbar() {
     };
   }, []);
 
+  // Escape closes the mobile menu, as keyboard users expect from any popup.
+  useEffect(() => {
+    if (!menuOpen) return undefined;
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") setMenuOpen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [menuOpen]);
+
   // Transparent over the hero, solid once the page scrolls.
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
@@ -108,7 +118,7 @@ export default function Navbar() {
                 <button
                   type="button"
                   onClick={handleLogout}
-                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+                  className="px-4 py-2 rounded-md border border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
                 >
                   Logout
                 </button>
@@ -131,6 +141,8 @@ export default function Navbar() {
             <button
               type="button"
               aria-label={menuOpen ? "Close menu" : "Open menu"}
+              aria-expanded={menuOpen}
+              aria-controls="mobile-menu"
               className="bg-gray-100 p-2 rounded-md dark:bg-slate-800"
               onClick={toggleMenu}
             >
@@ -142,7 +154,7 @@ export default function Navbar() {
 
       {/* Mobile Dropdown */}
       {menuOpen && (
-        <div className="md:hidden bg-white border-t dark:bg-slate-900">
+        <div id="mobile-menu" className="md:hidden bg-white border-t dark:bg-slate-900">
           <div className="flex flex-col px-4 py-3 space-y-2">
 
             {/* Scroll section links */}
@@ -196,7 +208,7 @@ export default function Navbar() {
                 <button
                   type="button"
                   onClick={handleLogout}
-                  className="bg-red-600 text-white px-3 py-2 rounded-md hover:bg-red-700 text-left"
+                  className="rounded-md border border-slate-300 px-3 py-2 text-left text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
                 >
                   Logout
                 </button>

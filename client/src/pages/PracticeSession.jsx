@@ -1,6 +1,8 @@
 import { createElement, useCallback, useEffect, useMemo, useState } from "react";
-import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { AlertCircle, ArrowLeft, CheckCircle2, LayoutDashboard, Loader2, RotateCcw, Save, Sparkles } from "lucide-react";
+import { expiredSaveLoginState, stashPendingSession } from "../utils/pendingSession";
+import { getClientErrorMessage } from "../utils/apiErrors";
 import { authFetch } from "../utils/authFetch";
 import { API_BASE_URL } from "../utils/apiBaseUrl";
 import AppHeader from "../components/app/AppHeader";
@@ -15,7 +17,6 @@ export default function PracticeSession() {
   const { type } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const location = useLocation();
 
   const category = decodeURIComponent(type);
   const track = getTrack(type);
@@ -97,9 +98,11 @@ export default function PracticeSession() {
           }),
         });
 
-        const data = await res.json();
-        if (!res.ok || !data.success) {
-          throw new Error(data?.message || "Evaluation failed");
+        const data = await res.json().catch(() => null);
+        if (!res.ok || !data?.success) {
+          throw Object.assign(new Error(data?.message || "Evaluation failed"), {
+            userMessage: getClientErrorMessage(res, data),
+          });
         }
 
         setEvaluations((prev) => ({ ...prev, [questionId]: data }));
@@ -115,7 +118,9 @@ export default function PracticeSession() {
             strengths: "",
             weaknesses: "",
             improvement: "",
-            overall_feedback: "We couldn't evaluate this answer right now. Please try again in a moment.",
+            overall_feedback:
+              err.userMessage ||
+              "We couldn't evaluate this answer right now. Please try again in a moment.",
           },
         }));
       } finally {
@@ -144,22 +149,25 @@ export default function PracticeSession() {
     setSaveMessage({ type: "", text: "" });
 
     try {
+      const payload = {
+        mode: "practice",
+        category: category.toLowerCase(),
+        difficulty: isBehavioral ? "" : (difficulty || "mixed").toLowerCase(),
+        questionCount: Number(count) || questions.length,
+        attemptedCount: attempted,
+        averageScore,
+      };
       const res = await authFetch(`${API_BASE_URL}/api/practice/sessions`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          mode: "practice",
-          category: category.toLowerCase(),
-          difficulty: isBehavioral ? "" : (difficulty || "mixed").toLowerCase(),
-          questionCount: Number(count) || questions.length,
-          attemptedCount: attempted,
-          averageScore,
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (!res.ok) {
         if (res.status === 401) {
-          navigate("/login", { state: { from: location }, replace: true });
+          // Keep the results so they are saved right after the user logs in again.
+          stashPendingSession(payload);
+          navigate("/login", { state: expiredSaveLoginState, replace: true });
           return;
         }
         throw new Error("Failed to save session");
@@ -305,6 +313,7 @@ export default function PracticeSession() {
 
                 <div className="mt-5">
                   <textarea
+                    maxLength={6000}
                     rows="5"
                     placeholder="Write your answer here..."
                     aria-label={`Answer for question ${index + 1}`}
