@@ -64,30 +64,31 @@ export default function ConfigurePractice() {
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
       <AppHeader />
 
-      <main className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
-        <Link to="/#practice"
+      <main className="mx-auto max-w-3xl px-4 py-6 sm:px-6 sm:py-8">
+        <Link
+          to="/#tracks"
           className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
         >
           <ArrowLeft className="h-4 w-4" />
           Back to all tracks
         </Link>
 
-        <div className="mt-6 flex items-start gap-4">
+        <div className="mt-4 flex items-center gap-4">
           <div
-            className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br text-white shadow-sm ${track.accent}`}
+            className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br text-white shadow-sm ${track.accent}`}
           >
-            {createElement(track.icon, { className: "h-7 w-7" })}
+            {createElement(track.icon, { className: "h-6 w-6" })}
           </div>
           <div>
             <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Set up your session</p>
             <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl dark:text-white">
               {track.label} interview
             </h1>
-            <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{track.description}</p>
+            <p className="mt-0.5 text-sm text-slate-600 dark:text-slate-400">{track.description}</p>
           </div>
         </div>
 
-        <div className="mt-8 space-y-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 dark:border-slate-800 dark:bg-slate-900">
+        <div className="mt-6 space-y-5 rounded-3xl border border-slate-200 bg-white px-5 pt-5 shadow-sm sm:px-6 sm:pt-6 dark:border-slate-800 dark:bg-slate-900">
           {/* Session type */}
           <fieldset>
             <legend className="text-sm font-semibold text-slate-900 dark:text-white">
@@ -111,11 +112,13 @@ export default function ConfigurePractice() {
                     {selected ? (
                       <CheckCircle2 className="absolute right-3 top-3 h-5 w-5 text-blue-600 dark:text-blue-400" />
                     ) : null}
-                    {createElement(option.icon, {
-                      className: `h-5 w-5 ${selected ? "text-blue-600 dark:text-blue-400" : "text-slate-500 dark:text-slate-400"}`,
-                    })}
-                    <p className="mt-3 font-semibold text-slate-900 dark:text-white">{option.title}</p>
-                    <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-400">{option.text}</p>
+                    <p className="flex items-center gap-2 pr-6 font-semibold text-slate-900 dark:text-white">
+                      {createElement(option.icon, {
+                        className: `h-5 w-5 ${selected ? "text-blue-600 dark:text-blue-400" : "text-slate-500 dark:text-slate-400"}`,
+                      })}
+                      {option.title}
+                    </p>
+                    <p className="mt-1.5 text-sm leading-6 text-slate-600 dark:text-slate-400">{option.text}</p>
                   </button>
                 );
               })}
@@ -137,7 +140,7 @@ export default function ConfigurePractice() {
                       type="button"
                       aria-pressed={selected}
                       onClick={() => setDifficulty(level.value)}
-                      className={`rounded-xl border-2 px-3 py-3 text-center transition ${
+                      className={`rounded-xl border-2 px-3 py-2.5 text-center transition ${
                         selected
                           ? "border-blue-600 bg-blue-50/60 dark:border-blue-500 dark:bg-blue-500/10"
                           : "border-slate-200 hover:border-slate-300 dark:border-slate-700 dark:hover:border-slate-600"
@@ -167,7 +170,7 @@ export default function ConfigurePractice() {
                       type="button"
                       aria-pressed={selected}
                       onClick={() => setCount(value)}
-                      className={`rounded-xl border-2 py-3 text-center font-semibold transition ${
+                      className={`rounded-xl border-2 py-2.5 text-center font-semibold transition ${
                         selected
                           ? "border-blue-600 bg-blue-50/60 text-blue-700 dark:border-blue-500 dark:bg-blue-500/10 dark:text-blue-300"
                           : "border-slate-200 text-slate-700 hover:border-slate-300 dark:border-slate-700 dark:text-slate-300 dark:hover:border-slate-600"
@@ -195,7 +198,8 @@ export default function ConfigurePractice() {
             </p>
           ) : null}
 
-          <div className="flex flex-col gap-4 border-t border-slate-200 pt-6 sm:flex-row sm:items-center sm:justify-between dark:border-slate-800">
+          {/* Sticky so the start button is always on screen, even on short laptop screens. */}
+          <div className="sticky bottom-0 -mx-5 flex flex-col gap-3 rounded-b-3xl border-t border-slate-200 bg-white/95 px-5 py-4 backdrop-blur sm:-mx-6 sm:flex-row sm:items-center sm:justify-between sm:px-6 dark:border-slate-800 dark:bg-slate-900/95">
             <div className="flex flex-wrap gap-2">
               {summary.map((item) => (
                 <span

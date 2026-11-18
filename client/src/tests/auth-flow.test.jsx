@@ -107,8 +107,8 @@ describe("Signup page", () => {
     renderSignup();
 
     await userEvent.type(screen.getByPlaceholderText(/^email$/i), "new@example.com");
-    await userEvent.type(screen.getByPlaceholderText(/at least 6 characters/i), "abc12345");
-    await userEvent.type(screen.getByPlaceholderText(/re-enter your password/i), "different1");
+    await userEvent.type(screen.getByLabelText(/^password$/i), "abc12345");
+    await userEvent.type(screen.getByLabelText(/confirm password/i), "different1");
     await userEvent.click(screen.getByRole("button", { name: /create account/i }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(/passwords do not match/i);
@@ -120,10 +120,10 @@ describe("Signup page", () => {
     axios.post.mockResolvedValue({ data: { message: "Registration successful" } });
     renderSignup();
 
-    await userEvent.type(screen.getByPlaceholderText(/your name/i), "Ali Khan");
+    await userEvent.type(screen.getByLabelText(/full name/i), "Ali Khan");
     await userEvent.type(screen.getByPlaceholderText(/^email$/i), "new@example.com");
-    await userEvent.type(screen.getByPlaceholderText(/at least 6 characters/i), "abc12345");
-    await userEvent.type(screen.getByPlaceholderText(/re-enter your password/i), "abc12345");
+    await userEvent.type(screen.getByLabelText(/^password$/i), "abc12345");
+    await userEvent.type(screen.getByLabelText(/confirm password/i), "abc12345");
     await userEvent.click(screen.getByRole("button", { name: /create account/i }));
 
     await waitFor(() => {
@@ -155,6 +155,6 @@ describe("Get started page tabs", () => {
 
     expect(await screen.findByRole("button", { name: /^log in$/i })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: /log in/i })).toHaveAttribute("aria-selected", "true");
-    expect(screen.queryByPlaceholderText(/re-enter your password/i)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/confirm password/i)).not.toBeInTheDocument();
   });
 });

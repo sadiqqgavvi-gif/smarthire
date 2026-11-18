@@ -336,7 +336,7 @@ export default function Dashboard() {
           type="button"
           onClick={handleLogout}
           aria-label="Logout"
-          className="inline-flex h-10 items-center gap-2 rounded-xl bg-slate-900 px-4 text-sm font-medium text-white transition hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white"
+          className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
         >
           <LogOut className="h-4 w-4" />
           <span className="hidden sm:inline">Logout</span>
@@ -360,7 +360,7 @@ export default function Dashboard() {
           </div>
 
           <div className="flex flex-wrap gap-3">
-            <Link to="/#practice"
+            <Link to="/#tracks"
               className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700"
             >
               <BookOpenCheck className="h-4 w-4" />
@@ -398,7 +398,7 @@ export default function Dashboard() {
                 Complete and save a practice session or mock interview to see your scores and progress here.
               </p>
             </div>
-            <Link to="/#practice"
+            <Link to="/#tracks"
               className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
             >
               Choose a track

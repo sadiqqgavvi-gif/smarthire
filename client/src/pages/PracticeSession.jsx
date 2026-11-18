@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom"
 import { AlertCircle, ArrowLeft, CheckCircle2, LayoutDashboard, Loader2, RotateCcw, Save, Sparkles } from "lucide-react";
 import { expiredSaveLoginState, stashPendingSession } from "../utils/pendingSession";
 import { getClientErrorMessage } from "../utils/apiErrors";
+import { revealElement } from "../utils/reveal";
 import { authFetch } from "../utils/authFetch";
 import { API_BASE_URL } from "../utils/apiBaseUrl";
 import AppHeader from "../components/app/AppHeader";
@@ -107,6 +108,7 @@ export default function PracticeSession() {
 
         setEvaluations((prev) => ({ ...prev, [questionId]: data }));
         setSaved(false);
+        revealElement(`feedback-${questionId}`);
       } catch (err) {
         console.error("Evaluation failed:", err);
         setEvaluations((prev) => ({
@@ -123,6 +125,7 @@ export default function PracticeSession() {
               "We couldn't evaluate this answer right now. Please try again in a moment.",
           },
         }));
+        revealElement(`feedback-${questionId}`);
       } finally {
         setEvaluatingIds((prev) => ({ ...prev, [questionId]: false }));
       }
@@ -191,7 +194,7 @@ export default function PracticeSession() {
     <div className="min-h-screen bg-slate-50 pb-32 dark:bg-slate-950">
       <AppHeader />
 
-      <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
+      <main className="mx-auto max-w-4xl px-4 py-6 sm:px-6 sm:py-8">
         <button
           type="button"
           onClick={goBack}
@@ -202,7 +205,7 @@ export default function PracticeSession() {
         </button>
 
         {/* Page heading */}
-        <div className="mt-6 flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+        <div className="mt-4 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div className="flex items-start gap-4">
             <div
               className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br text-white ${track.accent}`}
@@ -277,14 +280,14 @@ export default function PracticeSession() {
         {!fetching && !error && questions.length === 0 ? (
           <div className="mt-8 rounded-3xl border border-dashed border-slate-300 bg-white p-10 text-center dark:border-slate-700 dark:bg-slate-900">
             <p className="font-semibold text-slate-900 dark:text-white">No questions found for this category.</p>
-            <Link to="/#practice" className="mt-3 inline-block text-sm font-semibold text-blue-600 hover:underline dark:text-blue-400">
+            <Link to="/#tracks" className="mt-3 inline-block text-sm font-semibold text-blue-600 hover:underline dark:text-blue-400">
               Choose another track
             </Link>
           </div>
         ) : null}
 
         {/* Questions */}
-        <ol className="mt-8 space-y-6">
+        <ol className="mt-6 space-y-6">
           {questions.map((q, index) => {
             const answer = answers[q._id] || "";
             const trimmedLength = answer.trim().length;
@@ -314,10 +317,11 @@ export default function PracticeSession() {
                 <div className="mt-5">
                   <textarea
                     maxLength={6000}
-                    rows="5"
+                    rows="4"
+                    // a little shorter on phones so the evaluate button stays above the finish bar
                     placeholder="Write your answer here..."
                     aria-label={`Answer for question ${index + 1}`}
-                    className="w-full resize-y rounded-2xl border border-slate-200 bg-slate-50/50 p-4 text-sm leading-6 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-blue-400"
+                    className="h-28 w-full resize-y rounded-2xl border border-slate-200 bg-slate-50/50 p-4 sm:h-auto text-sm leading-6 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-blue-400"
                     value={answer}
                     onChange={(e) => setAnswers({ ...answers, [q._id]: e.target.value })}
                   />
@@ -349,7 +353,8 @@ export default function PracticeSession() {
                 </div>
 
                 {evaluation ? (
-                  <div className="mt-5">
+                  // scroll margins keep the feedback clear of the header and the sticky finish bar
+                  <div id={`feedback-${q._id}`} className="mt-5 scroll-mb-40 scroll-mt-20">
                     <FeedbackPanel evaluation={evaluation} category={category} />
                   </div>
                 ) : null}
@@ -362,10 +367,10 @@ export default function PracticeSession() {
       {/* Sticky finish bar */}
       {!fetching && questions.length > 0 ? (
         <div className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/90 backdrop-blur-md dark:border-slate-800 dark:bg-slate-950/90">
-          <div className="mx-auto flex max-w-4xl flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-            <div className="text-sm">
+          <div className="mx-auto flex max-w-4xl items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-4">
+            <div className="min-w-0 text-sm">
               <p className="font-semibold text-slate-900 dark:text-white">
-                {attempted ? `Average score ${averageScore.toFixed(1)}/10` : "Answer a question to get started"}
+                {attempted ? `Average score ${averageScore.toFixed(1)}/10` : "No scores yet"}
               </p>
               {saveMessage.text ? (
                 <p
@@ -380,25 +385,26 @@ export default function PracticeSession() {
                 </p>
               ) : (
                 <p className="text-slate-500 dark:text-slate-400">
-                  {attempted} of {questions.length} questions evaluated
+                  {attempted} of {questions.length} evaluated
                 </p>
               )}
             </div>
-            <div className="flex gap-2">
+            <div className="flex shrink-0 gap-2">
               {saved ? (
                 <Link
                   to="/dashboard"
-                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                  aria-label="View dashboard"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 sm:px-4 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
                 >
                   <LayoutDashboard className="h-4 w-4" />
-                  View dashboard
+                  <span className="hidden sm:inline">View dashboard</span>
                 </Link>
               ) : null}
               <button
                 type="button"
                 onClick={saveSession}
                 disabled={saving || saved || attempted === 0}
-                className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none"
+                className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50 sm:px-5"
               >
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                 {saved ? "Saved" : saving ? "Saving..." : "Finish & save session"}
