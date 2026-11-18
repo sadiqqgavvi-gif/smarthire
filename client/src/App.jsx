@@ -15,6 +15,7 @@ import Footer from "./layout/Footer";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import PageLoader from "./components/app/PageLoader";
 import ScrollManager from "./components/app/ScrollManager";
+import DocumentTitle from "./components/app/DocumentTitle";
 
 const loadAuth = () => import("./pages/Auth");
 const Auth = lazy(loadAuth);
@@ -54,6 +55,7 @@ export default function App() {
   return (
     <Suspense fallback={<PageLoader />}>
       <ScrollManager />
+      <DocumentTitle />
       <Routes>
         <Route path="/" element={<Home />} />
 

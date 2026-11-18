@@ -63,6 +63,7 @@ export default function Auth({ type }) {
   const [message, setMessage] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [googleReady, setGoogleReady] = useState(false);
+  const [googleFailed, setGoogleFailed] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [messageType, setMessageType] = useState("info");
@@ -84,12 +85,15 @@ export default function Auth({ type }) {
   const redirectRef = useRef(redirectTo);
   redirectRef.current = redirectTo;
   const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+  // A page that sent the user here can explain why (for example an expired login).
+  const stateNotice = typeof location.state?.notice === "string" ? location.state.notice : "";
 
   useEffect(() => {
     let isMounted = true;
 
     setForm(EMPTY_FORM);
-    setMessage("");
+    setMessage(stateNotice);
+    setMessageType("info");
     setShowPassword(false);
 
     const checkAuth = async () => {
@@ -109,7 +113,7 @@ export default function Auth({ type }) {
     return () => {
       isMounted = false;
     };
-  }, [type]);
+  }, [type, stateNotice]);
 
   useEffect(() => {
     if (!googleClientId) {
@@ -198,9 +202,10 @@ export default function Auth({ type }) {
     script.defer = true;
     script.onload = mountGoogleButton;
     script.onerror = () => {
-      if (!cancelled) {
-        showMessage("Google sign-in could not be loaded right now.", "error");
-      }
+      // Remove the failed tag so the next visit to this page tries again.
+      script.remove();
+      // Shown under the Google button so it never replaces a more important message.
+      if (!cancelled) setGoogleFailed(true);
     };
     document.head.appendChild(script);
 
@@ -397,7 +402,9 @@ export default function Auth({ type }) {
                   <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
                     {googleLoading
                       ? "Signing you in with Google..."
-                      : !googleReady
+                      : googleFailed
+                        ? "Google sign-in couldn't load (a network or ad blocker may be blocking it). You can still log in with email and password."
+                        : !googleReady
                         ? "Preparing Google sign-in..."
                         : copy.googleHint}
                   </p>

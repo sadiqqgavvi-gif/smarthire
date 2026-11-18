@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { authFetch, logoutUser } from "../utils/authFetch";
+import { stashPendingSession, takePendingSession } from "../utils/pendingSession";
 import { API_BASE_URL } from "../utils/apiBaseUrl";
 import AppHeader from "../components/app/AppHeader";
 import { getScoreTone } from "../components/app/scoreTone";
@@ -168,6 +169,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [userName, setUserName] = useState("");
+  const [notice, setNotice] = useState("");
 
   const navigate = useNavigate();
   const { isDark } = useTheme();
@@ -177,7 +179,29 @@ export default function Dashboard() {
   const location = useLocation();
 
   useEffect(() => {
+    // Results kept when a save failed because the login had expired (see pendingSession).
+    const savePendingSession = async () => {
+      const pending = takePendingSession();
+      if (!pending) return;
+
+      try {
+        const res = await authFetch(`${API_BASE_URL}/api/practice/sessions`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(pending),
+        });
+        if (res.ok) {
+          setNotice("Your last session was saved to the dashboard.");
+        } else if (res.status === 401) {
+          stashPendingSession(pending);
+        }
+      } catch {
+        stashPendingSession(pending);
+      }
+    };
+
     const loadDashboard = async () => {
+      await savePendingSession();
       try {
         const res = await authFetch(`${API_BASE_URL}/api/practice/sessions/me`);
 
@@ -354,6 +378,12 @@ export default function Dashboard() {
       </div>
 
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        {notice ? (
+          <p role="status" className="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300">
+            {notice}
+          </p>
+        ) : null}
+
         {loadError ? (
           <p role="alert" className="mb-6 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300">
             {loadError}

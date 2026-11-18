@@ -177,3 +177,53 @@ test("GET /api/ai/python-health returns diagnostics payload", async () => {
   assert.ok(typeof json?.scriptExists === "boolean");
   assert.ok(typeof json?.pythonBin === "string");
 });
+
+test("malformed JSON returns 400 INVALID_JSON without parser internals", async () => {
+  const response = await fetch(`${baseUrl}/api/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: "{bad",
+  });
+  const json = await response.json();
+
+  assert.equal(response.status, 400);
+  assert.equal(json?.error?.code, "INVALID_JSON");
+  assert.doesNotMatch(json.message, /position|property name/i);
+});
+
+test("a request body over the size limit returns 413 PAYLOAD_TOO_LARGE", async () => {
+  const { response, json } = await requestJson("/api/ai/evaluate", {
+    method: "POST",
+    body: { question: "What is React?", answer: "React ".repeat(20000) },
+  });
+
+  assert.equal(response.status, 413);
+  assert.equal(json?.error?.code, "PAYLOAD_TOO_LARGE");
+});
+
+test("POST /api/ai/evaluate rejects an answer longer than the maximum", async () => {
+  const { response, json } = await requestJson("/api/ai/evaluate", {
+    method: "POST",
+    body: { question: "What is React?", answer: "a".repeat(6001) },
+  });
+
+  assert.equal(response.status, 400);
+  assert.equal(json?.error?.field, "answer");
+  assert.match(json.message, /too long/i);
+});
+
+test("a protected route without an access token but with a refresh cookie asks for a refresh", async () => {
+  const { response, json } = await requestJson("/api/practice/sessions/me", {
+    headers: { Cookie: "refreshToken=some-refresh-token" },
+  });
+
+  assert.equal(response.status, 401);
+  assert.equal(json?.error?.code, "AUTH_TOKEN_EXPIRED");
+});
+
+test("a protected route without any token reports the token as missing", async () => {
+  const { response, json } = await requestJson("/api/practice/sessions/me");
+
+  assert.equal(response.status, 401);
+  assert.equal(json?.error?.code, "AUTH_TOKEN_MISSING");
+});

@@ -2,6 +2,7 @@ import jwt from "jsonwebtoken";
 import { sendError } from "../utils/apiResponse.js";
 
 const ACCESS_COOKIE_NAME = "accessToken";
+const REFRESH_COOKIE_NAME = "refreshToken";
 
 const parseCookies = (cookieHeader = "") => {
   return cookieHeader.split(";").reduce((acc, part) => {
@@ -22,6 +23,17 @@ const protect = (req, res, next) => {
   const token = bearerToken || cookieToken;
 
   if (!token) {
+    // The access cookie expires after 15 minutes and the browser deletes it, while the
+    // refresh cookie lives on. Tell the client the session expired (not that it is
+    // missing) so it refreshes silently instead of sending the user back to login.
+    if (cookies[REFRESH_COOKIE_NAME]) {
+      return sendError(res, {
+        status: 401,
+        code: "AUTH_TOKEN_EXPIRED",
+        message: "Session expired, refresh required",
+      });
+    }
+
     return sendError(res, {
       status: 401,
       code: "AUTH_TOKEN_MISSING",

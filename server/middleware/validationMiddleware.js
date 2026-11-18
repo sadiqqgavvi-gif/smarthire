@@ -59,6 +59,21 @@ export const validateContactPayload = (req, res, next) => {
   return next();
 };
 
+// An interview answer of ~1,000 words is already very long; anything bigger is a paste
+// mistake or abuse and would only slow the evaluator down.
+export const MAX_QUESTION_LENGTH = 2000;
+export const MAX_ANSWER_LENGTH = 6000;
+
+const checkEvaluationLengths = (question, answer) => {
+  if (question.length > MAX_QUESTION_LENGTH) {
+    return [`Question is too long (maximum ${MAX_QUESTION_LENGTH} characters)`, "question"];
+  }
+  if (answer.length > MAX_ANSWER_LENGTH) {
+    return [`Answer is too long (maximum ${MAX_ANSWER_LENGTH} characters)`, "answer"];
+  }
+  return null;
+};
+
 export const validateAiEvaluationPayload = (req, res, next) => {
   const { question, answer } = req.body || {};
 
@@ -69,6 +84,9 @@ export const validateAiEvaluationPayload = (req, res, next) => {
   if (!answer || typeof answer !== "string" || !answer.trim()) {
     return sendValidationError(res, "Answer is required", "answer");
   }
+
+  const lengthError = checkEvaluationLengths(question, answer);
+  if (lengthError) return sendValidationError(res, ...lengthError);
 
   return next();
 };
@@ -83,6 +101,9 @@ export const validateMockEvaluationPayload = (req, res, next) => {
   if (!answer || typeof answer !== "string" || !answer.trim()) {
     return sendValidationError(res, "Answer is required", "answer");
   }
+
+  const lengthError = checkEvaluationLengths(question, answer);
+  if (lengthError) return sendValidationError(res, ...lengthError);
 
   return next();
 };

@@ -1,5 +1,5 @@
 import { createElement, useEffect, useRef, useState } from "react";
-import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
   AlertCircle,
   ArrowLeft,
@@ -17,6 +17,8 @@ import {
   Volume2,
   VolumeX,
 } from "lucide-react";
+import { expiredSaveLoginState, stashPendingSession } from "../utils/pendingSession";
+import { getClientErrorMessage } from "../utils/apiErrors";
 import { authFetch } from "../utils/authFetch";
 import { API_BASE_URL } from "../utils/apiBaseUrl";
 import AppHeader from "../components/app/AppHeader";
@@ -49,7 +51,6 @@ export default function MockInterview() {
   const { type } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const location = useLocation();
   const track = getTrack(type);
   const goBack = useGoBack(`/practice/${type}/configure`);
 
@@ -273,10 +274,12 @@ export default function MockInterview() {
           category: type,
         }),
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => null);
 
-      if (!data.success || !data.evaluation) {
-        throw new Error(data?.error?.message || data?.message || "Evaluation unavailable");
+      if (!data?.success || !data.evaluation) {
+        throw Object.assign(new Error(data?.message || "Evaluation unavailable"), {
+          userMessage: getClientErrorMessage(res, data),
+        });
       }
 
       const seconds = (Date.now() - questionStartRef.current) / 1000;
@@ -300,7 +303,8 @@ export default function MockInterview() {
     } catch (err) {
       console.error("Evaluation error", err);
       setEvalError(
-        "We couldn't evaluate this answer right now. Your answer is still here, so please try again."
+        err.userMessage ||
+          "We couldn't evaluate this answer right now. Your answer is still here, so please try again."
       );
     } finally {
       setEvaluating(false);
@@ -352,22 +356,25 @@ export default function MockInterview() {
     setSaveMessage("");
 
     try {
+      const payload = {
+        mode: "mock",
+        category: String(type).toLowerCase(),
+        difficulty: difficulty || "mixed",
+        questionCount: Number(count) || questions.length,
+        attemptedCount: scores.length,
+        averageScore,
+      };
       const res = await authFetch(`${API_BASE_URL}/api/practice/sessions`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          mode: "mock",
-          category: String(type).toLowerCase(),
-          difficulty: difficulty || "mixed",
-          questionCount: Number(count) || questions.length,
-          attemptedCount: scores.length,
-          averageScore,
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (!res.ok) {
         if (res.status === 401) {
-          navigate("/login", { state: { from: location }, replace: true });
+          // Keep the results so they are saved right after the user logs in again.
+          stashPendingSession(payload);
+          navigate("/login", { state: expiredSaveLoginState, replace: true });
           return;
         }
         throw new Error("Unable to save this mock interview.");
@@ -653,6 +660,7 @@ export default function MockInterview() {
             }`}
           >
             <textarea
+              maxLength={6000}
               value={answer}
               onChange={(e) => setAnswer(e.target.value)}
               disabled={Boolean(feedback)}
